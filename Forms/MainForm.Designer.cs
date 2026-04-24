@@ -39,7 +39,7 @@
             this.CreateRoomButton.Depth = 0;
             this.CreateRoomButton.HighEmphasis = true;
             this.CreateRoomButton.Icon = null;
-            this.CreateRoomButton.Location = new System.Drawing.Point(6, 70);
+            this.CreateRoomButton.Location = new System.Drawing.Point(7, 39);
             this.CreateRoomButton.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
             this.CreateRoomButton.MouseState = MaterialSkin.MouseState.HOVER;
             this.CreateRoomButton.Name = "CreateRoomButton";
@@ -54,10 +54,10 @@
             // RoomLayoutPanel
             // 
             this.RoomLayoutPanel.AutoScroll = true;
-            this.RoomLayoutPanel.Location = new System.Drawing.Point(6, 115);
+            this.RoomLayoutPanel.Location = new System.Drawing.Point(6, 84);
             this.RoomLayoutPanel.Name = "RoomLayoutPanel";
             this.RoomLayoutPanel.Padding = new System.Windows.Forms.Padding(10);
-            this.RoomLayoutPanel.Size = new System.Drawing.Size(388, 329);
+            this.RoomLayoutPanel.Size = new System.Drawing.Size(388, 360);
             this.RoomLayoutPanel.TabIndex = 2;
             // 
             // MainForm
@@ -67,8 +67,9 @@
             this.ClientSize = new System.Drawing.Size(400, 450);
             this.Controls.Add(this.RoomLayoutPanel);
             this.Controls.Add(this.CreateRoomButton);
+            this.FormStyle = MaterialSkin.Controls.MaterialForm.FormStyles.ActionBar_None;
             this.Name = "MainForm";
-            this.Padding = new System.Windows.Forms.Padding(15);
+            this.Padding = new System.Windows.Forms.Padding(3, 24, 15, 15);
             this.Text = "VoiceChat";
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.ResumeLayout(false);
