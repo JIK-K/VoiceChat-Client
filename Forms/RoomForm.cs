@@ -18,6 +18,17 @@ namespace VoiceChat.Forms
         {
             InitializeComponent();
 
+      
+
+            InitializeMaterialSkin();
+            InitializeLayout();
+        }
+        private void InitializeLayout()
+        {
+
+        }
+        private void InitializeMaterialSkin()
+        {
             var materialSkinManager = MaterialSkinManager.Instance;
             materialSkinManager.AddFormToManage(this);
             materialSkinManager.Theme = MaterialSkinManager.Themes.DARK;
@@ -31,5 +42,9 @@ namespace VoiceChat.Forms
         {
 
         }
+
+        private Panel PnlServerList;
+        private Panel PnlChannelList;
+        private Panel PnlContent;
     }
 }
