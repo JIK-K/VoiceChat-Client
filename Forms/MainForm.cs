@@ -16,5 +16,10 @@ namespace VoiceChat
         {
             InitializeComponent();
         }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }
