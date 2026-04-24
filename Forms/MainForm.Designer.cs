@@ -28,13 +28,58 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
+            this.CreateRoomButton = new MaterialSkin.Controls.MaterialButton();
+            this.RoomLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
+            this.SuspendLayout();
+            // 
+            // CreateRoomButton
+            // 
+            this.CreateRoomButton.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.CreateRoomButton.Density = MaterialSkin.Controls.MaterialButton.MaterialButtonDensity.Default;
+            this.CreateRoomButton.Depth = 0;
+            this.CreateRoomButton.HighEmphasis = true;
+            this.CreateRoomButton.Icon = null;
+            this.CreateRoomButton.Location = new System.Drawing.Point(6, 70);
+            this.CreateRoomButton.Margin = new System.Windows.Forms.Padding(4, 6, 4, 6);
+            this.CreateRoomButton.MouseState = MaterialSkin.MouseState.HOVER;
+            this.CreateRoomButton.Name = "CreateRoomButton";
+            this.CreateRoomButton.NoAccentTextColor = System.Drawing.Color.Empty;
+            this.CreateRoomButton.Size = new System.Drawing.Size(118, 36);
+            this.CreateRoomButton.TabIndex = 0;
+            this.CreateRoomButton.Text = "CreateRoom";
+            this.CreateRoomButton.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            this.CreateRoomButton.UseAccentColor = false;
+            this.CreateRoomButton.UseVisualStyleBackColor = true;
+            // 
+            // RoomLayoutPanel
+            // 
+            this.RoomLayoutPanel.AutoScroll = true;
+            this.RoomLayoutPanel.Location = new System.Drawing.Point(6, 115);
+            this.RoomLayoutPanel.Name = "RoomLayoutPanel";
+            this.RoomLayoutPanel.Padding = new System.Windows.Forms.Padding(10);
+            this.RoomLayoutPanel.Size = new System.Drawing.Size(388, 329);
+            this.RoomLayoutPanel.TabIndex = 2;
+            // 
+            // MainForm
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Text = "Form1";
+            this.ClientSize = new System.Drawing.Size(400, 450);
+            this.Controls.Add(this.RoomLayoutPanel);
+            this.Controls.Add(this.CreateRoomButton);
+            this.Name = "MainForm";
+            this.Padding = new System.Windows.Forms.Padding(15);
+            this.Text = "VoiceChat";
+            this.Load += new System.EventHandler(this.MainForm_Load);
+            this.ResumeLayout(false);
+            this.PerformLayout();
+
         }
 
         #endregion
+
+        private MaterialSkin.Controls.MaterialButton CreateRoomButton;
+        private System.Windows.Forms.FlowLayoutPanel RoomLayoutPanel;
     }
 }
 
