@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace VoiceChat.Forms
@@ -18,6 +19,7 @@ namespace VoiceChat.Forms
             this.Width = 110;
             this.Dock = DockStyle.Left;
             this.BackColor = COL_BG;
+            this.ForeColor = COL_TEXT_MUTED;
             Build();
         }
 
@@ -46,6 +48,7 @@ namespace VoiceChat.Forms
                 TextAlign = ContentAlignment.MiddleLeft,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left,
                 RightToLeft = RightToLeft.No,
+                
             });
             return y + 26;
         }
@@ -90,8 +93,10 @@ namespace VoiceChat.Forms
         {
             if (_selectedItem != null)
             {
-                _selectedItem.BackColor = Color.Transparent;  // ✅ 완전 투명으로
+                Console.WriteLine($"해제 전: {_selectedItem.Text} ForeColor = {_selectedItem.ForeColor}");
+                _selectedItem.BackColor = Color.Transparent;
                 _selectedItem.ForeColor = COL_TEXT_MUTED;
+                Console.WriteLine($"해제 후: {_selectedItem.Text} ForeColor = {_selectedItem.ForeColor}");
             }
 
             _selectedItem = item;
