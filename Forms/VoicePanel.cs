@@ -19,10 +19,15 @@ namespace VoiceChat.Forms
         private Panel _participantList;  
         private MaterialLabel _memberCount;
 
+        private Label _myMicLbl = null; //본인
+        private Panel _myDot = null;
+        private MaterialButton btnMic;
+
+
         public VoicePanel()
         {
             this.Dock = DockStyle.Fill;
-            //this.BackColor = COL_BG;
+
             Build();
         }
 
@@ -33,7 +38,7 @@ namespace VoiceChat.Forms
             {
                 Dock = DockStyle.Top,
                 Height = 48,
-               // BackColor = COL_TOP_BAR
+               
             };
 
             var topLabel = new MaterialLabel
@@ -122,7 +127,7 @@ namespace VoiceChat.Forms
                 Padding = new Padding(16, 12, 16, 12)
             };
 
-            var btnMic = new MaterialButton
+            btnMic = new MaterialButton
             {
                 Text = "🎙 마이크",
                 Left = 16,
@@ -132,11 +137,7 @@ namespace VoiceChat.Forms
                 AutoSize = false,
                 Type = MaterialButton.MaterialButtonType.Outlined
             };
-            btnMic.Click += (s, e) =>
-            {
-                _isMuted = !_isMuted;
-                btnMic.Text = _isMuted ? "🔇 음소거" : "🎙 마이크";
-            };
+            btnMic.Click += OnMicClick;
 
             var btnLeave = new MaterialButton
             {
@@ -171,11 +172,14 @@ namespace VoiceChat.Forms
             // row
             var row = new Panel
             {
-                Width = _participantList.Width,
+                Width = _participantList.ClientSize.Width,
                 Height = 48,
                 BackColor = COL_ROW
             };
-
+            _participantList.SizeChanged += (s, e) =>
+            {
+                row.Width = _participantList.ClientSize.Width;
+            };
             var statusDot = new Panel
             {
                 Width = 12,
@@ -219,7 +223,25 @@ namespace VoiceChat.Forms
       
             _participantList.Controls.Add(row);
 
+            if (_myMicLbl == null)
+            {
+                _myMicLbl = micLbl;
+                _myDot = statusDot;
+            }
+
             _memberCount.Text = $"👥 {_participantList.Controls.Count / 2}명";
+        }
+
+        private void OnMicClick(object sender, System.EventArgs e)
+        {
+            _isMuted = !_isMuted;
+            btnMic.Text = _isMuted ? "🎙 마이크" : "🔇 음소거";
+
+            if (_myMicLbl == null) return;  // 아직 아무도 없으면 무시
+
+            _myMicLbl.Text = _isMuted ? "🎙" : "🔇";
+            _myMicLbl.ForeColor = _isMuted ? COL_GREEN : COL_TEXT_MUTED;
+            _myDot.BackColor = _isMuted ? COL_GREEN : COL_TEXT_MUTED;
         }
     }
 }
