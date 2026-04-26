@@ -50,6 +50,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Forms\ChatPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Forms\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -66,6 +69,9 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Forms\ServerListPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Forms\VoicePanel.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Program.cs" />
