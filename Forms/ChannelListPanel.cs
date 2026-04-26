@@ -1,12 +1,12 @@
 ﻿using System.Drawing;
 using System.Windows.Forms;
+using MaterialSkin.Controls;
 
 namespace VoiceChat.Forms
 {
     public class ChannelListPanel : Panel
     {
         private readonly Color COL_BG = Color.FromArgb(43, 45, 49);
-        private readonly Color COL_TEXT_MUTED = Color.FromArgb(120, 124, 130);
 
         public event System.Action<string, bool> OnChannelSelected;
 
@@ -33,43 +33,40 @@ namespace VoiceChat.Forms
 
         private int AddCategory(string title, int y)
         {
-            this.Controls.Add(new Label
+            var lbl = new MaterialLabel
             {
                 Text = title + " >",
-                Font = new Font("Segoe UI", 8f, FontStyle.Bold),
-                ForeColor = COL_TEXT_MUTED,
-                BackColor = COL_BG,
                 Left = 8,
                 Top = y,
                 Width = 184,
                 Height = 24,
-                TextAlign = ContentAlignment.MiddleLeft,
-                RightToLeft = RightToLeft.No
-            });
+                AutoSize = false
+            };
+            this.Controls.Add(lbl);
             return y + 28;
         }
 
         private int AddChannel(string name, int y, bool isVoice)
         {
-            var lbl = new Label
+            var btn = new MaterialButton
             {
                 Text = name,
-                Font = new Font("Segoe UI", 10f),
-                ForeColor = COL_TEXT_MUTED,
-                BackColor = COL_BG,
-                Left = 12,
+                Left = 4,
                 Top = y,
-                Width = 184,
-                Height = 32,
-                TextAlign = ContentAlignment.MiddleLeft,
-                RightToLeft = RightToLeft.No,
-                Cursor = Cursors.Hand
+                Width = 192,
+                Height = 36,
+                AutoSize = false,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Type = MaterialButton.MaterialButtonType.Text,  // 텍스트 스타일
+                UseAccentColor = false,
+                HighEmphasis = false,
+                //NoAccentTextColor = true
             };
 
-            lbl.Click += (s, e) => OnChannelSelected?.Invoke(name, isVoice);
+            btn.Click += (s, e) => OnChannelSelected?.Invoke(name, isVoice);
 
-            this.Controls.Add(lbl);
-            return y + 34;
+            this.Controls.Add(btn);
+            return y + 40;
         }
     }
 }

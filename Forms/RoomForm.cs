@@ -6,7 +6,7 @@ namespace VoiceChat.Forms
 {
     public partial class RoomForm : MaterialForm
     {
-        private Panel _contentArea;   // 오른쪽 콘텐츠 영역
+        private MaterialCard _contentArea;   // 오른쪽 콘텐츠 영역
         private ChatPanel _chatPanel;
         private VoicePanel _voicePanel;
 
@@ -14,7 +14,7 @@ namespace VoiceChat.Forms
         {
             InitializeComponent();
             InitializeMaterialSkin();
-            //InitializeLayout();
+            InitializeLayout();
         }
 
         private void InitializeMaterialSkin()
@@ -30,29 +30,27 @@ namespace VoiceChat.Forms
 
         private void InitializeLayout()
         {
-            // ── 콘텐츠 패널 ──
-            _contentArea = new Panel
+            // ── 콘텐츠 영역 (MaterialCard) ──
+            _contentArea = new MaterialCard
             {
                 Dock = DockStyle.Fill,
-                BackColor = System.Drawing.Color.FromArgb(54, 57, 63)
+                Padding = new System.Windows.Forms.Padding(0)
             };
 
-            // ── 패널 미리 생성 ──
             _chatPanel = new ChatPanel();
             _voicePanel = new VoicePanel();
 
-            // 기본은 숨김
             _chatPanel.Visible = false;
             _voicePanel.Visible = false;
 
             _contentArea.Controls.Add(_chatPanel);
             _contentArea.Controls.Add(_voicePanel);
 
-        
+            // ── 채널 리스트 (왼쪽) ──
             var channelList = new ChannelListPanel();
             channelList.OnChannelSelected += OnChannelSelected;
 
-    
+            // Fill 먼저, Left 나중
             this.Controls.Add(_contentArea);
             this.Controls.Add(channelList);
         }
