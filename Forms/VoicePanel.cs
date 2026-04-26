@@ -10,7 +10,6 @@ namespace VoiceChat.Forms
         private readonly Color COL_TOP_BAR = Color.FromArgb(40, 43, 48);
         private readonly Color COL_BOTTOM_BAR = Color.FromArgb(40, 43, 48);
         private readonly Color COL_ROW = Color.FromArgb(47, 49, 54);
-        private readonly Color COL_ROW_HOVER = Color.FromArgb(60, 63, 70);
         private readonly Color COL_TEXT_MAIN = Color.FromArgb(220, 221, 222);
         private readonly Color COL_TEXT_MUTED = Color.FromArgb(120, 124, 130);
         private readonly Color COL_GREEN = Color.FromArgb(59, 165, 93);
@@ -98,16 +97,12 @@ namespace VoiceChat.Forms
             testBar.Controls.Add(btnAdd);
 
             // ── 참여자 리스트 영역 ──
-            _participantList = new FlowLayoutPanel
+            _participantList = new Panel
             {
                 Dock = DockStyle.Fill,
                 BackColor = COL_BG,
-                AutoScroll = true,
-                FlowDirection = FlowDirection.TopDown,
-                WrapContents = false,
-                Padding = new Padding(0),
+                AutoScroll = true
             };
-
             // 입장 버튼 클릭
             btnAdd.Click += (s, e) =>
             {
@@ -167,19 +162,18 @@ namespace VoiceChat.Forms
         // 참여자 행 추가
         public void AddParticipant(string name, bool isSpeaking)
         {
-        
 
-            // row
+
             var row = new Panel
             {
-                Width = _participantList.ClientSize.Width,
                 Height = 48,
-                BackColor = COL_ROW
+                BackColor = COL_ROW,
+                Margin = new Padding(0),
+                Dock = DockStyle.Top
             };
-            _participantList.SizeChanged += (s, e) =>
-            {
-                row.Width = _participantList.ClientSize.Width;
-            };
+
+          
+          
             var statusDot = new Panel
             {
                 Width = 12,
@@ -219,9 +213,11 @@ namespace VoiceChat.Forms
             row.Controls.Add(statusDot);
             row.Controls.Add(nameLbl);
 
-           
-      
+
+
+
             _participantList.Controls.Add(row);
+            _participantList.Controls.SetChildIndex(row, 0);
 
             if (_myMicLbl == null)
             {
@@ -229,7 +225,7 @@ namespace VoiceChat.Forms
                 _myDot = statusDot;
             }
 
-            _memberCount.Text = $"👥 {_participantList.Controls.Count / 2}명";
+            _memberCount.Text = $"👥 {_participantList.Controls.Count}명";
         }
 
         private void OnMicClick(object sender, System.EventArgs e)
