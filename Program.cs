@@ -17,9 +17,21 @@ namespace VoiceChat
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-           // Application.Run(new MainForm());
 
-            Application.Run(new RoomForm());
+            var mainForm = new MainForm();
+
+
+#if DEBUG
+            // 테스트 모드: TestTcpManager 사용
+            ITcpManager tcp = new TestTcpManager();
+#else
+        // 실제 모드: 팀원 TcpManager 사용
+        ITcpManager tcp = new TcpManager();
+#endif
+
+            //var controller = new MainFormController(mainForm, tcp);
+            Application.Run(mainForm);
+            //Application.Run(new RoomForm());
         }
     }
 }

@@ -64,37 +64,6 @@ namespace VoiceChat.Forms
             topBar.Controls.Add(topLabel);
             topBar.Controls.Add(_memberCount);
 
-            // ── 테스트용 입력 바 ──
-            var testBar = new Panel
-            {
-                Dock = DockStyle.Top,
-                Height = 52,
-                BackColor = COL_TOP_BAR,
-                Padding = new Padding(8, 8, 8, 8)
-            };
-
-            var inputName = new MaterialTextBox
-            {
-                Hint = "이름 입력 (테스트용)",
-                Left = 8,
-                Top = 8,
-                Width = 160,
-                Height = 36
-            };
-
-            var btnAdd = new MaterialButton
-            {
-                Text = "입장",
-                Left = 176,
-                Top = 8,
-                Width = 80,
-                Height = 36,
-                AutoSize = false,
-                Type = MaterialButton.MaterialButtonType.Contained
-            };
-
-            testBar.Controls.Add(inputName);
-            testBar.Controls.Add(btnAdd);
 
             // ── 참여자 리스트 영역 ──
             _participantList = new Panel
@@ -103,16 +72,7 @@ namespace VoiceChat.Forms
                 BackColor = COL_BG,
                 AutoScroll = true
             };
-            // 입장 버튼 클릭
-            btnAdd.Click += (s, e) =>
-            {
-                string name = inputName.Text.Trim();
-                if (string.IsNullOrEmpty(name)) return;
-
-                AddParticipant(name, isSpeaking: false);
-                inputName.Text = "";
-            };
-
+   
             // ── 하단 바 ──
             var bottomBar = new Panel
             {
@@ -155,7 +115,6 @@ namespace VoiceChat.Forms
             // 순서: Bottom → Fill → testBar → Top
             this.Controls.Add(_participantList);
             this.Controls.Add(bottomBar);
-            this.Controls.Add(testBar);
             this.Controls.Add(topBar);
         }
 

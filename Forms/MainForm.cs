@@ -10,13 +10,39 @@ namespace VoiceChat
 
     public partial class MainForm : MaterialForm
     {
+        private ITcpManager _tcp = new TestTcpManager();
+        private string _nickname = "테스트유저";
+
         public MainForm()
         {
             InitializeComponent();
 
             var materialSkinManager = MaterialSkinManager.Instance;
             materialSkinManager.AddFormToManage(this);
+
+            SubscribeEvents();
+
         }
+        private void SubscribeEvents()
+        {
+            _tcp.OnConnected += OnConnected;
+            _tcp.OnConnectFailed += OnConnectFailed;      
+           // _tcp.OnRoomListReceived += OnRoomListReceived; 
+        }
+        private void OnConnected()
+        {
+            Invoke((Action)(() =>
+            {
+                var roomForm = new RoomForm(_nickname, _tcp);
+                roomForm.Show();
+                this.Hide();
+            }));
+        }
+        private void OnConnectFailed(string msg)
+        {
+            Invoke((Action)(() => MessageBox.Show(msg, "연결 실패")));
+        }
+
 
         // 2. 이제 List<string>이 아닌 List<RoomInfo>를 받습니다.
         private void UpdateRoomList(List<RoomInfo> rooms)
@@ -53,6 +79,10 @@ namespace VoiceChat
         private void JoinRoomRequest(string roomName)
         {
             MessageBox.Show($"{roomName} 입장 요청을 보냅니다.");
+
+            //이민하 : 테스트 코드 추가
+            _tcp.Connect("127.0.0.1", 9000, _nickname);
+           
         }
 
         private void MainForm_Load(object sender, EventArgs e)

@@ -50,7 +50,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Forms\ChatPanel.cs">
+    <Compile Include="Forms\ITcpManager.cs" />
+    <Compile Include="Forms\Panel\ChatPanel.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Forms\MainForm.cs">
@@ -59,28 +60,28 @@
     <Compile Include="Forms\MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
-
     <Compile Include="Forms\RoomItemControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Forms\RoomItemControl.Designer.cs">
       <DependentUpon>RoomItemControl.cs</DependentUpon>
-	</Compile>
+    </Compile>
     <Compile Include="Forms\RoomForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\RoomForm.Designer.cs">
       <DependentUpon>RoomForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\ChannelListPanel.cs">
+    <Compile Include="Forms\Panel\ChannelListPanel.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Forms\ServerListPanel.cs">
+    <Compile Include="Forms\Panel\ServerListPanel.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Forms\VoicePanel.cs">
+    <Compile Include="Forms\Panel\VoicePanel.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Forms\TestTcpManager.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Forms\MainForm.resx">
@@ -88,7 +89,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\RoomItemControl.resx">
       <DependentUpon>RoomItemControl.cs</DependentUpon>
-	</EmbeddedResource>	
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\RoomForm.resx">
       <DependentUpon>RoomForm.cs</DependentUpon>
     </EmbeddedResource>

@@ -1,0 +1,19 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace VoiceChat.Forms
+{
+    public interface ITcpManager
+    {
+        event Action OnConnected;
+        event Action<string> OnConnectFailed;
+        event Action<List<string>> OnUserListReceived; // 추가
+        event Action<string> OnUserJoined;
+
+        void Connect(string ip, int port, string nickname);
+        void JoinVoiceChannel(string channelName);
+    }
+}

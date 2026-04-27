@@ -1,5 +1,7 @@
 ﻿using MaterialSkin;
 using MaterialSkin.Controls;
+using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace VoiceChat.Forms
@@ -10,12 +12,30 @@ namespace VoiceChat.Forms
         private ChatPanel _chatPanel;
         private VoicePanel _voicePanel;
 
+        private ITcpManager _tcp;
+        private string _nickname; // 추가
+        private bool _joined = false;
+
+
         public RoomForm()
         {
             InitializeComponent();
             InitializeMaterialSkin();
             InitializeLayout();
         }
+
+        public RoomForm(string nickname, ITcpManager tcp)
+        {
+            InitializeComponent();
+
+            _nickname = nickname;
+            _tcp = tcp;
+            SubscribeEvents();
+
+            InitializeMaterialSkin();
+            InitializeLayout();
+        }
+
 
         private void InitializeMaterialSkin()
         {
@@ -55,19 +75,53 @@ namespace VoiceChat.Forms
             this.Controls.Add(channelList);
         }
 
-        // 채널 클릭 시 호출
+        private void SubscribeEvents()
+        {
+            _tcp.OnUserListReceived += OnUserListReceived;
+            _tcp.OnUserJoined += OnUserJoined;
+            //_tcp.OnUserLeft += OnUserLeft;
+        }
+
+        private void OnUserListReceived(List<string> users)
+        {
+            Invoke((Action)(() =>
+            {
+                foreach (var user in users)
+                    _voicePanel.AddParticipant(user, isSpeaking: false);
+            }));
+        }
+
+        private void OnUserJoined(string username)
+        {
+            Invoke((Action)(() =>
+                _voicePanel.AddParticipant(username, isSpeaking: false)));
+        }
+
+        private void OnUserLeft(string username)
+        {
+            //Invoke((Action)(() =>
+             //   _voicePanel.RemoveParticipant(username))); // VoicePanel에 추가 필요
+        }
+
         private void OnChannelSelected(string channelName, bool isVoice)
         {
-            // 둘 다 숨기고
             _chatPanel.Visible = false;
             _voicePanel.Visible = false;
 
-            // 해당 패널만 표시
             if (isVoice)
+            {
+                if (!_joined)
+                {
+                    _voicePanel.AddParticipant(_nickname, isSpeaking: false); // 나 자신
+                    _tcp.JoinVoiceChannel(channelName); // 서버에 입장 알림
+                    _joined = true;
+                }
                 _voicePanel.Visible = true;
+            }
             else
                 _chatPanel.Visible = true;
         }
+      
 
         private void RoomForm_Load(object sender, System.EventArgs e) { }
     }
