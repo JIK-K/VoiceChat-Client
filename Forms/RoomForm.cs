@@ -60,6 +60,8 @@ namespace VoiceChat.Forms
             _chatPanel = new ChatPanel();
             _voicePanel = new VoicePanel();
 
+          //  _voicePanel.OnLeaveClick += OnLeaveRoom;
+
             _chatPanel.Visible = false;
             _voicePanel.Visible = false;
 
@@ -70,7 +72,6 @@ namespace VoiceChat.Forms
             var channelList = new ChannelListPanel();
             channelList.OnChannelSelected += OnChannelSelected;
 
-            // Fill 먼저, Left 나중
             this.Controls.Add(_contentArea);
             this.Controls.Add(channelList);
         }
@@ -79,7 +80,7 @@ namespace VoiceChat.Forms
         {
             _tcp.OnUserListReceived += OnUserListReceived;
             _tcp.OnUserJoined += OnUserJoined;
-            //_tcp.OnUserLeft += OnUserLeft;
+           _tcp.OnUserLeft += OnUserLeft;
         }
 
         private void OnUserListReceived(List<string> users)
@@ -99,8 +100,16 @@ namespace VoiceChat.Forms
 
         private void OnUserLeft(string username)
         {
-            //Invoke((Action)(() =>
-             //   _voicePanel.RemoveParticipant(username))); // VoicePanel에 추가 필요
+            Invoke((Action)(() =>
+               _voicePanel.RemoveParticipant(username))); // VoicePanel에 추가 필요
+        }
+
+        private void OnLeaveRoom()
+        {
+            // 나중에 _tcp.LeaveRoom() 호출
+            var mainForm = new MainForm();
+            mainForm.Show();
+            this.Close();
         }
 
         private void OnChannelSelected(string channelName, bool isVoice)

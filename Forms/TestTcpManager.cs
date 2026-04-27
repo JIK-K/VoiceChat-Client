@@ -13,6 +13,7 @@ namespace VoiceChat.Forms
         public event Action<string> OnConnectFailed;
         public event Action<List<string>> OnUserListReceived;
         public event Action<string> OnUserJoined;
+        public event Action<string> OnUserLeft;
 
 
         public void Connect(string ip, int port, string nickname)
@@ -33,13 +34,9 @@ namespace VoiceChat.Forms
             // 기존 참여자 목록 전달
             OnUserListReceived?.Invoke(new List<string> { "홍길동", "김철수" });
 
-            // 3초 후 새 유저 입장
+            // 3초 후 유저 퇴장
             Task.Delay(3000).ContinueWith(_ =>
-                OnUserJoined?.Invoke("이영희"));
-
-            // 6초 후 유저 퇴장
-            //Task.Delay(6000).ContinueWith(_ =>
-               // OnUserLeft?.Invoke("김철수"));
+                OnUserLeft?.Invoke("김철수"));
         }
     }
 }

@@ -22,6 +22,7 @@ namespace VoiceChat.Forms
         private Panel _myDot = null;
         private MaterialButton btnMic;
 
+       // public event System.Action OnLeaveClick;
 
         public VoicePanel()
         {
@@ -112,7 +113,7 @@ namespace VoiceChat.Forms
             bottomBar.Controls.Add(btnMic);
             bottomBar.Controls.Add(btnLeave);
 
-            // 순서: Bottom → Fill → testBar → Top
+            // 순서: Bottom → Fill → Top
             this.Controls.Add(_participantList);
             this.Controls.Add(bottomBar);
             this.Controls.Add(topBar);
@@ -128,7 +129,8 @@ namespace VoiceChat.Forms
                 Height = 48,
                 BackColor = COL_ROW,
                 Margin = new Padding(0),
-                Dock = DockStyle.Top
+                Dock = DockStyle.Top,
+                Tag = name,
             };
 
           
@@ -184,6 +186,20 @@ namespace VoiceChat.Forms
                 _myDot = statusDot;
             }
 
+            _memberCount.Text = $"👥 {_participantList.Controls.Count}명";
+        }
+
+        // 참여자 행 제거
+        public void RemoveParticipant(string name)
+        {
+            foreach (Control c in _participantList.Controls)
+            {
+                if (c is Panel row && row.Tag as string == name)
+                {
+                    _participantList.Controls.Remove(row);
+                    break;
+                }
+            }
             _memberCount.Text = $"👥 {_participantList.Controls.Count}명";
         }
 

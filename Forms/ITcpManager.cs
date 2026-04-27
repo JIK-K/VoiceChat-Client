@@ -12,6 +12,7 @@ namespace VoiceChat.Forms
         event Action<string> OnConnectFailed;
         event Action<List<string>> OnUserListReceived; // 추가
         event Action<string> OnUserJoined;
+        event Action<string> OnUserLeft;
 
         void Connect(string ip, int port, string nickname);
         void JoinVoiceChannel(string channelName);
