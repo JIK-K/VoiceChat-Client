@@ -65,7 +65,7 @@
     </Compile>
     <Compile Include="Forms\RoomItemControl.Designer.cs">
       <DependentUpon>RoomItemControl.cs</DependentUpon>
-
+	</Compile>
     <Compile Include="Forms\RoomForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -86,9 +86,9 @@
     <EmbeddedResource Include="Forms\MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>
-
     <EmbeddedResource Include="Forms\RoomItemControl.resx">
       <DependentUpon>RoomItemControl.cs</DependentUpon>
+	</EmbeddedResource>	
     <EmbeddedResource Include="Forms\RoomForm.resx">
       <DependentUpon>RoomForm.cs</DependentUpon>
     </EmbeddedResource>
