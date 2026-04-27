@@ -10,11 +10,16 @@ namespace VoiceChat.Forms
     {
         event Action OnConnected;
         event Action<string> OnConnectFailed;
+        event Action<List<RoomInfo>> OnRoomListReceived;
         event Action<List<string>> OnUserListReceived; // 추가
         event Action<string> OnUserJoined;
         event Action<string> OnUserLeft;
 
+        void CreateRoom(string roomName);
+
         void Connect(string ip, int port, string nickname);
         void JoinVoiceChannel(string channelName);
+
+        void RequestRoomList();
     }
 }

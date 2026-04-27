@@ -2,6 +2,7 @@
 using MaterialSkin.Controls;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 using VoiceChat.Forms;
 
@@ -17,8 +18,13 @@ namespace VoiceChat
         {
             InitializeComponent();
 
-            var materialSkinManager = MaterialSkinManager.Instance;
-            materialSkinManager.AddFormToManage(this);
+            var skin = MaterialSkinManager.Instance;
+            skin.AddFormToManage(this);
+            skin.ColorScheme = new ColorScheme(
+                Primary.BlueGrey900, Primary.BlueGrey900,
+                Primary.BlueGrey500, Accent.LightBlue200,
+                TextShade.WHITE
+            );
 
             SubscribeEvents();
 
@@ -27,9 +33,9 @@ namespace VoiceChat
         {
             _tcp.OnConnected += OnConnected;
             _tcp.OnConnectFailed += OnConnectFailed;      
-           // _tcp.OnRoomListReceived += OnRoomListReceived; 
+            _tcp.OnRoomListReceived += OnRoomListReceived; 
         }
-        // MainForm에서 RoomForm 열 때 자신(this) 전달
+
         private void OnConnected()
         {
             Invoke((Action)(() =>
@@ -87,24 +93,21 @@ namespace VoiceChat
            
         }
 
+        private void OnRoomListReceived(List<RoomInfo> rooms)
+        {
+            Invoke((Action)(() => UpdateRoomList(rooms)));
+        }
+
+
         private void MainForm_Load(object sender, EventArgs e)
         {
             // 3. 테스트용 가짜 데이터 (객체 리스트)
-            var dummyRooms = new List<RoomInfo> 
-            { 
-                new RoomInfo { Name = "롤 5인큐 구함", CurrentUsers = 3, MaxUsers = 5 },
-                new RoomInfo { Name = "C++ 고수만", CurrentUsers = 1, MaxUsers = 10 },
-                new RoomInfo { Name = "음성채팅 테스트방", CurrentUsers = 8, MaxUsers = 20 },
-                new RoomInfo { Name = "음성채팅 테스트방", CurrentUsers = 8, MaxUsers = 20 },
-                new RoomInfo { Name = "음성채팅 테스트방", CurrentUsers = 8, MaxUsers = 20 },
-                new RoomInfo { Name = "음성채팅 테스트방", CurrentUsers = 8, MaxUsers = 20 },
-                new RoomInfo { Name = "음성채팅 테스트방", CurrentUsers = 8, MaxUsers = 20 },
-                new RoomInfo { Name = "음성채팅 테스트방", CurrentUsers = 8, MaxUsers = 20 },
-                new RoomInfo { Name = "음성채팅 테스트방", CurrentUsers = 8, MaxUsers = 20 }
+            _tcp.RequestRoomList();
+        }
 
-            };
+        private void CreateRoomButton_Click(object sender, EventArgs e)
+        {
 
-            UpdateRoomList(dummyRooms);
         }
     }
 
