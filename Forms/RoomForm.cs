@@ -8,12 +8,13 @@ namespace VoiceChat.Forms
 {
     public partial class RoomForm : MaterialForm
     {
-        private MaterialCard _contentArea;   // 오른쪽 콘텐츠 영역
+        private MaterialCard _contentArea;  
         private ChatPanel _chatPanel;
         private VoicePanel _voicePanel;
 
         private ITcpManager _tcp;
-        private string _nickname; // 추가
+        private MainForm _mainForm;
+        private string _nickname; 
         private bool _joined = false;
 
 
@@ -24,12 +25,14 @@ namespace VoiceChat.Forms
             InitializeLayout();
         }
 
-        public RoomForm(string nickname, ITcpManager tcp)
+        public RoomForm(string nickname, ITcpManager tcp, MainForm mainForm)
         {
             InitializeComponent();
 
             _nickname = nickname;
             _tcp = tcp;
+            _mainForm = mainForm;
+
             SubscribeEvents();
 
             InitializeMaterialSkin();
@@ -60,7 +63,7 @@ namespace VoiceChat.Forms
             _chatPanel = new ChatPanel();
             _voicePanel = new VoicePanel();
 
-          //  _voicePanel.OnLeaveClick += OnLeaveRoom;
+            _voicePanel.OnLeaveClick += OnLeaveRoom;
 
             _chatPanel.Visible = false;
             _voicePanel.Visible = false;
@@ -101,14 +104,13 @@ namespace VoiceChat.Forms
         private void OnUserLeft(string username)
         {
             Invoke((Action)(() =>
-               _voicePanel.RemoveParticipant(username))); // VoicePanel에 추가 필요
+               _voicePanel.RemoveParticipant(username))); 
         }
 
         private void OnLeaveRoom()
         {
             // 나중에 _tcp.LeaveRoom() 호출
-            var mainForm = new MainForm();
-            mainForm.Show();
+            _mainForm.Show();
             this.Close();
         }
 
@@ -130,8 +132,14 @@ namespace VoiceChat.Forms
             else
                 _chatPanel.Visible = true;
         }
-      
 
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            _tcp.OnUserListReceived -= OnUserListReceived;
+            _tcp.OnUserJoined -= OnUserJoined;
+            _tcp.OnUserLeft -= OnUserLeft;
+            base.OnFormClosing(e);
+        }
         private void RoomForm_Load(object sender, System.EventArgs e) { }
     }
 }

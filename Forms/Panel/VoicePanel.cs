@@ -20,9 +20,10 @@ namespace VoiceChat.Forms
 
         private Label _myMicLbl = null; //본인
         private Panel _myDot = null;
+        private Panel _myRow = null;
         private MaterialButton btnMic;
 
-       // public event System.Action OnLeaveClick;
+        public event System.Action OnLeaveClick;
 
         public VoicePanel()
         {
@@ -108,6 +109,17 @@ namespace VoiceChat.Forms
             btnLeave.Click += (s, e) =>
             {
                 // 나중에 서버 퇴장 로직
+
+                if (_myRow != null)
+                {
+                    _participantList.Controls.Remove(_myRow);
+                    _myRow = null;
+                    _myMicLbl = null;
+                    _myDot = null;
+                    _memberCount.Text = $"👥 {_participantList.Controls.Count}명";
+                }
+
+                OnLeaveClick?.Invoke();
             };
 
             bottomBar.Controls.Add(btnMic);
@@ -184,6 +196,7 @@ namespace VoiceChat.Forms
             {
                 _myMicLbl = micLbl;
                 _myDot = statusDot;
+                _myRow = row;
             }
 
             _memberCount.Text = $"👥 {_participantList.Controls.Count}명";

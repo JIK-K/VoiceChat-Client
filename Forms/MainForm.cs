@@ -29,15 +29,17 @@ namespace VoiceChat
             _tcp.OnConnectFailed += OnConnectFailed;      
            // _tcp.OnRoomListReceived += OnRoomListReceived; 
         }
+        // MainForm에서 RoomForm 열 때 자신(this) 전달
         private void OnConnected()
         {
             Invoke((Action)(() =>
             {
-                var roomForm = new RoomForm(_nickname, _tcp);
+                var roomForm = new RoomForm(_nickname, _tcp, this); // this 추가
                 roomForm.Show();
                 this.Hide();
             }));
         }
+
         private void OnConnectFailed(string msg)
         {
             Invoke((Action)(() => MessageBox.Show(msg, "연결 실패")));

@@ -34,9 +34,6 @@ namespace VoiceChat.Forms
             // 기존 참여자 목록 전달
             OnUserListReceived?.Invoke(new List<string> { "홍길동", "김철수" });
 
-            // 3초 후 유저 퇴장
-            Task.Delay(3000).ContinueWith(_ =>
-                OnUserLeft?.Invoke("김철수"));
         }
     }
 }
