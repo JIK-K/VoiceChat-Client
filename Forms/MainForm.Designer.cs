@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+
             this.CreateRoomButton = new MaterialSkin.Controls.MaterialButton();
             this.RoomLayoutPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.SuspendLayout();
@@ -74,6 +75,7 @@
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
+
 
         }
 

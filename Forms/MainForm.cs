@@ -74,6 +74,11 @@ namespace VoiceChat
 
             UpdateRoomList(dummyRooms);
         }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 
 
