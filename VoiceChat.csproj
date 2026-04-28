@@ -103,6 +103,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Audio\AudioCapture.cs" />
+    <Compile Include="Audio\AudioPlayback.cs" />
+    <Compile Include="Audio\JitterBuffer.cs" />
     <Compile Include="Forms\ChatPanel.cs">
       <SubType>Component</SubType>
     </Compile>
