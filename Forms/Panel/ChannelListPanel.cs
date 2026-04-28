@@ -22,10 +22,10 @@ namespace VoiceChat.Forms
         {
             int y = 8;
 
-            y = AddCategory("채팅 채널", y);
-            y = AddChannel("# 채팅방1", y, isVoice: false);
+            //y = AddCategory("채팅 채널", y);
+            //y = AddChannel("# 채팅방1", y, isVoice: false);
 
-            y += 8;
+            //y += 8;
 
             y = AddCategory("음성 채널", y);
             y = AddChannel("🔊 일반1", y, isVoice: true);

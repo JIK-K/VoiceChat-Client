@@ -13,11 +13,21 @@ namespace VoiceChat
     {
         private ITcpManager _tcp = new TestTcpManager();
         private string _nickname = "테스트유저";
+        private List<RoomInfo> _currentRooms = new List<RoomInfo>();
+
 
         public MainForm()
         {
             InitializeComponent();
 
+            InitializeMaterialSkin();
+
+            SubscribeEvents();
+
+        }
+
+        private void InitializeMaterialSkin()
+        {
             var skin = MaterialSkinManager.Instance;
             skin.AddFormToManage(this);
             skin.ColorScheme = new ColorScheme(
@@ -25,15 +35,16 @@ namespace VoiceChat
                 Primary.BlueGrey500, Accent.LightBlue200,
                 TextShade.WHITE
             );
-
-            SubscribeEvents();
-
         }
+
+
+
         private void SubscribeEvents()
         {
             _tcp.OnConnected += OnConnected;
-            _tcp.OnConnectFailed += OnConnectFailed;      
-            _tcp.OnRoomListReceived += OnRoomListReceived; 
+            _tcp.OnConnectFailed += OnConnectFailed;
+            _tcp.OnRoomListReceived += OnRoomListReceived;
+            _tcp.OnRoomCreated += OnRoomCreated;
         }
 
         private void OnConnected()
@@ -50,7 +61,10 @@ namespace VoiceChat
         {
             Invoke((Action)(() => MessageBox.Show(msg, "연결 실패")));
         }
-
+        private void OnRoomCreated(string roomName)
+        {
+            Invoke((Action)(() => JoinRoomRequest(roomName)));
+        }
 
         // 2. 이제 List<string>이 아닌 List<RoomInfo>를 받습니다.
         private void UpdateRoomList(List<RoomInfo> rooms)
@@ -68,7 +82,7 @@ namespace VoiceChat
             {
                 RoomItemControl item = new RoomItemControl();
                 item.RoomName = room.Name;
-                item.RoomCount = $"{room.CurrentUsers}/{room.MaxUsers}";
+                //item.RoomCount = $"{room.CurrentUsers}/{room.MaxUsers}";
 
                 // 아이템 간의 간격(Gap)만 설정
                 item.Margin = new Padding(0, 0, 0, 10);
@@ -90,12 +104,16 @@ namespace VoiceChat
 
             //이민하 : 테스트 코드 추가
             _tcp.Connect("127.0.0.1", 9000, _nickname);
-           
+
         }
 
         private void OnRoomListReceived(List<RoomInfo> rooms)
         {
-            Invoke((Action)(() => UpdateRoomList(rooms)));
+            Invoke((Action)(() =>
+            {
+                _currentRooms = rooms; // 저장
+                UpdateRoomList(_currentRooms);
+            }));
         }
 
 
@@ -107,8 +125,29 @@ namespace VoiceChat
 
         private void CreateRoomButton_Click(object sender, EventArgs e)
         {
+            var dialog = new RoomDialog();
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
 
+                //임시 테스트용 코드
+                {
+                    // UI만 추가
+                    _currentRooms.Add(new RoomInfo { Name = dialog.RoomName });
+                    UpdateRoomList(_currentRooms);
+
+                    // 바로 조인
+                    JoinRoomRequest(dialog.RoomName);
+                }
+               
+            }
+
+
+            // 서버에 요청
+            //_tcp.CreateRoom(dialog.RoomName);
+            // 서버가 OnRoomListReceived로 갱신된 목록 보내주면 자동 갱신
+            // 조인은 OnRoomCreated에서 자동으로
         }
+        
     }
 
 
@@ -116,7 +155,7 @@ namespace VoiceChat
     public class RoomInfo
     {
         public string Name { get; set; }
-        public int CurrentUsers { get; set; }
-        public int MaxUsers { get; set; }
+        //public int CurrentUsers { get; set; }
+        //public int MaxUsers { get; set; }
     }
 }

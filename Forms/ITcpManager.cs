@@ -14,12 +14,13 @@ namespace VoiceChat.Forms
         event Action<List<string>> OnUserListReceived; // 추가
         event Action<string> OnUserJoined;
         event Action<string> OnUserLeft;
-
-        void CreateRoom(string roomName);
+        event Action<string> OnRoomCreated;
 
         void Connect(string ip, int port, string nickname);
         void JoinVoiceChannel(string channelName);
 
         void RequestRoomList();
+
+        void CreateRoom(string roomName);
     }
 }

@@ -15,6 +15,7 @@ namespace VoiceChat.Forms
         public event Action<string> OnUserLeft;
         public event Action<List<RoomInfo>> OnRoomListReceived;
         public event Action<List<string>> OnUserListReceived;
+        public event Action<string> OnRoomCreated;
 
         public void RequestRoomList()
         {
@@ -23,9 +24,9 @@ namespace VoiceChat.Forms
             Task.Delay(500).ContinueWith(_ =>
                 OnRoomListReceived?.Invoke(new List<RoomInfo>
                 {
-                    new RoomInfo { Name = "room1", CurrentUsers = 1, MaxUsers = 10 },
-                    new RoomInfo { Name = "room2", CurrentUsers = 2, MaxUsers = 10 },
-                    new RoomInfo { Name = "room3", CurrentUsers = 3, MaxUsers = 10 }
+                    new RoomInfo { Name = "room1",},
+                    new RoomInfo { Name = "room2",},
+                    new RoomInfo { Name = "room3",}
                 }));
         }
 
@@ -47,6 +48,16 @@ namespace VoiceChat.Forms
             // 기존 참여자 목록 전달
             OnUserListReceived?.Invoke(new List<string> { "홍길동", "김철수" });
 
+        }
+
+        public void CreateRoom(string roomName)
+        {
+            Console.WriteLine($"[TEST] CreateRoom: {roomName}");
+            Task.Delay(500).ContinueWith(_ =>
+            {
+                // 방 생성 완료 알림
+                OnRoomCreated?.Invoke(roomName);
+            });
         }
     }
 }
