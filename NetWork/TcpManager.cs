@@ -1,144 +1,197 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 using System.Text.Json;
+using System.Threading.Tasks;
+using VoiceChat;
+using VoiceChat.Forms;
+using VoiceChat.protocol;
 
-
-namespace VoiceChat.Forms
+internal class TcpManager : ITcpManager
 {
-    internal class TcpManager : ITcpManager
+    // ── 이벤트 ──
+    public event Action<int> OnConnected;
+    public event Action<string> OnConnectFailed;
+    public event Action<int> OnUserJoined;
+    public event Action<int> OnUserLeft;           // string → int
+    public event Action<List<int>> OnUserListReceived; // List<string> → List<int>
+    public event Action<List<RoomInfo>> OnRoomListReceived;
+
+    // ── 필드 ──
+    private TcpClient _client;
+    private NetworkStream _stream;
+    private int _UserId;
+
+
+
+
+    // ── 메서드 ──
+    public void Connect(string ip, int port)
     {
-        public event Action OnConnected;
-        public event Action<string> OnConnectFailed;
-        //public event Action<string> OnUserJoined;
-        public event Action<string> OnUserLeft;
-        public event Action<List<RoomInfo>> OnRoomListReceived;
-        public event Action<List<string>> OnUserListReceived;
-        
-
-        private TcpClient _client;
-        private NetworkStream _stream;
-
-        public event Action<int> OnUserJoined;
-        public event Action<string> OnRoomCreated;
-
-        public void RequestRoomList()
+        Task.Run(async () =>
         {
-            Console.WriteLine("[TEST] RequestRoomList 호출");
+            try
+            {
+                _client = new TcpClient();
+                await _client.ConnectAsync(ip, port);
+                _stream = _client.GetStream();
 
-            Task.Delay(500).ContinueWith(_ =>
-               OnRoomListReceived?.Invoke(new List<RoomInfo>
-               {
-                    new RoomInfo { Name = "room1",},
-                   new RoomInfo { Name = "room2",},
-                   new RoomInfo { Name = "room3",}
-               }));
+                _UserId = ((System.Net.IPEndPoint)_client.Client.LocalEndPoint).Port;
+                OnConnected?.Invoke(_UserId);
+                ReceiveLoop();
+            }
+            catch (Exception ex)
+            {
+                OnConnectFailed?.Invoke(ex.Message);
+            }
+        });
+    }
+
+    public void RequestRoomList()
+    {
+        Console.WriteLine("[TcpManager] RequestRoomList 호출");
+        if (_stream == null)
+        {
+            Console.WriteLine("[TcpManager] _stream null");
+            return;
         }
+        SendPacket(PacketConstants.PACKET_TYPE_CONTROL, _UserId, 0,
+            new { cmd = "room_list" });
+    }
 
-        public void Connect(string ip, int port)
+    public void JoinRoom(int userId, int roomId)
+    {
+        Console.WriteLine($"[TcpManager] JoinRoom 전송: userId={userId}, roomId={roomId}");
+        SendPacket(PacketConstants.PACKET_TYPE_CONTROL, userId, roomId,
+            new { cmd = "join", userId = userId, roomId = roomId });
+    }
+
+    public void LeaveRoom(int userId, int roomId)
+    {
+        Console.WriteLine($"[TcpManager] LeaveRoom 전송: userId={userId}, roomId={roomId}");
+        SendPacket(PacketConstants.PACKET_TYPE_CONTROL, userId, roomId,
+            new { cmd = "leave", userId = userId, roomId = roomId });
+    }
+
+    // ── 내부 ──
+    private void SendPacket(byte type, int userId, int roomId, object obj)
+    {
+        var json = JsonSerializer.Serialize(obj);
+        var payloadData = Encoding.UTF8.GetBytes(json);
+
+        PacketHeader header = new PacketHeader
         {
-            Task.Run(async () =>
+            Type = type,
+            RoomId = roomId,
+            UserId = userId,
+            Sequence = 0,
+            PayloadLength = (ushort)payloadData.Length
+        };
+
+        byte[] packetData = PacketHandler.Serialize(header, payloadData);
+        _stream.Write(packetData, 0, packetData.Length);
+    }
+
+    private void ParseEvent(byte[] payload)
+    {
+        string json = Encoding.UTF8.GetString(payload);
+        Console.WriteLine($"[TcpManager] ParseEvent: {json}");
+        var doc = JsonDocument.Parse(json);
+        var evt = doc.RootElement.GetProperty("event").GetString();
+
+        switch (evt)
+        {
+            case "room_list":
+                var rooms = doc.RootElement
+                    .GetProperty("rooms")
+                    .EnumerateArray()
+                    .Select(r => new RoomInfo
+                    {
+                        RoomId = r.GetProperty("roomId").GetInt32(),
+                        CurrentUsers = r.GetProperty("count").GetInt32(),
+                    })
+                    .Where(r => r.CurrentUsers > 0)
+                    .ToList();
+                Console.WriteLine($"[TcpManager] room_list 수신 - 방 개수: {rooms.Count}");
+                OnRoomListReceived?.Invoke(rooms);
+                break;
+
+            case "user_list":
+                var users = doc.RootElement
+                    .GetProperty("users")
+                    .EnumerateArray()
+                    .Select(u => u.GetInt32())
+                    .ToList();
+                Console.WriteLine($"[TcpManager] user_list 수신 - {users.Count}명");
+                OnUserListReceived?.Invoke(users);
+                break;
+
+            case "user_joined":
+                var joinedId = doc.RootElement.GetProperty("userId").GetInt32();
+                Console.WriteLine($"[TcpManager] user_joined: {joinedId}");
+                OnUserJoined?.Invoke(joinedId);
+                break;
+
+            case "user_left":
+                var leftId = doc.RootElement.GetProperty("userId").GetInt32();
+                Console.WriteLine($"[TcpManager] user_left: {leftId}");
+                OnUserLeft?.Invoke(leftId);
+                break;
+        }
+    }
+
+    private void ReceiveLoop()
+    {
+        Task.Run(() =>
+        {
+            Console.WriteLine("[TcpManager] ReceiveLoop 시작");
+            while (true)
             {
                 try
                 {
-                    _client = new TcpClient();
-                    await _client.ConnectAsync(ip, port);
-                    _stream = _client.GetStream();
+                    byte[] headerBuf = new byte[PacketConstants.HEADER_SIZE];
+                    int bytesRead = ReadExact(_stream, headerBuf, PacketConstants.HEADER_SIZE);
+                    if (bytesRead == 0) break;
 
-                    OnConnected?.Invoke();
+                    if (!PacketHandler.DeserializeHeader(headerBuf, bytesRead, out PacketHeader header))
+                    {
+                        Console.WriteLine("[TcpManager] 헤더 파싱 실패");
+                        continue;
+                    }
 
-                    // 수신 루프
-                    ReceiveLoop();
+                    byte[] payload = new byte[header.PayloadLength];
+                    ReadExact(_stream, payload, header.PayloadLength);
+
+                    // 로그 추가 - 바이트 그대로 출력
+                   // Console.WriteLine($"[TcpManager] PayloadLength: {header.PayloadLength}");
+                    //Console.WriteLine($"[TcpManager] 실제 바이트: {BitConverter.ToString(payload)}");
+
+                   // string raw = Encoding.UTF8.GetString(payload);
+                    //Console.WriteLine($"[TcpManager] raw 문자열: {raw}");
+
+                    ParseEvent(payload);
                 }
                 catch (Exception ex)
                 {
-                    OnConnectFailed?.Invoke(ex.Message);
-                }
-            });
-        }
-
-        public void JoinRoom(int userId, int roomId)
-        {
-            Send(new { cmd = "join", userId = userId, roomId = roomId });
-        }
-
-
-
-        private void Send(object obj)
-        {
-            var json = JsonSerializer.Serialize(obj);
-            var data = Encoding.UTF8.GetBytes(json + "\n");
-            _stream.Write(data, 0, data.Length);
-        }
-        //public void JoinVoiceChannel(string channelName)
-        //{
-        //    Console.WriteLine($"[TEST] JoinVoiceChannel: {channelName}");
-
-        //    // 기존 참여자 목록 전달
-        //    OnUserListReceived?.Invoke(new List<string> { "홍길동", "김철수" });
-
-        //}
-
-        public void CreateRoom(string roomName)
-        {
-            Console.WriteLine($"[TEST] CreateRoom: {roomName}");
-            Task.Delay(500).ContinueWith(_ =>
-            {
-                // 방 생성 완료 알림
-                OnRoomCreated?.Invoke(roomName);
-            });
-        }
-
-
-        private void ParseEvent(string json)
-        {
-            var doc = JsonDocument.Parse(json);
-            var evt = doc.RootElement.GetProperty("event").GetString();
-
-            switch (evt)
-            {
-                //case "user_list":
-                //    var users = doc.RootElement
-                //        .GetProperty("users")
-                //        .EnumerateArray()
-                //        .Select(u => u.GetInt32()) // userId가 int
-                //        .ToList();
-                //    OnUserListReceived?.Invoke(users);
-                //    break;
-
-                case "user_joined":
-                    var joinedId = doc.RootElement.GetProperty("userId").GetInt32();
-                    OnUserJoined?.Invoke(joinedId);
+                    Console.WriteLine($"[TcpManager] ReceiveLoop 예외: {ex.Message}");
                     break;
-
-                //case "user_left":
-                //    var leftId = doc.RootElement.GetProperty("userId").GetInt32();
-                //    OnUserLeft?.Invoke(leftId);
-                //    break;
-            }
-        }
-
-        private void ReceiveLoop()
-        {
-            Task.Run(() =>
-            {
-                var buffer = new byte[4096];
-                while (true)
-                {
-                    try
-                    {
-                        int n = _stream.Read(buffer, 0, buffer.Length);
-                        if (n == 0) break;
-
-                        var json = Encoding.UTF8.GetString(buffer, 0, n);
-                        ParseEvent(json); // 수신하면 바로 파싱
-                    }
-                    catch { break; }
                 }
-            });
+            }
+            Console.WriteLine("[TcpManager] ReceiveLoop 종료");
+        });
+    }
+
+    private int ReadExact(NetworkStream stream, byte[] buffer, int count)
+    {
+        int total = 0;
+        while (total < count)
+        {
+            int n = stream.Read(buffer, total, count - total);
+            if (n == 0) return 0;
+            total += n;
         }
+        return total;
     }
 }

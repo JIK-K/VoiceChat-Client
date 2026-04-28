@@ -8,23 +8,16 @@ namespace VoiceChat.Forms
 {
     public interface ITcpManager
     {
-        event Action OnConnected;
+        event Action<int> OnConnected;
         event Action<string> OnConnectFailed;
-        event Action<List<RoomInfo>> OnRoomListReceived;
-        event Action<List<string>> OnUserListReceived; // 추가
-      
-       
-        event Action<string> OnUserLeft;
-        event Action<string> OnRoomCreated;
-
         event Action<int> OnUserJoined;
+        event Action<int> OnUserLeft;
+        event Action<List<int>> OnUserListReceived;
+        event Action<List<RoomInfo>> OnRoomListReceived;
 
         void Connect(string ip, int port);
-
-        void JoinRoom(int userId, int roomId);
-
         void RequestRoomList();
-
-        void CreateRoom(string roomName);
+        void JoinRoom(int userId, int roomId);
+        void LeaveRoom(int userId, int roomId); // 추가
     }
 }

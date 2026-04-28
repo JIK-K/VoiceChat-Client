@@ -131,6 +131,14 @@ namespace VoiceChat.Forms
             this.Controls.Add(topBar);
         }
 
+        public void ClearParticipants()
+        {
+            _participantList.Controls.Clear();
+            _myMicLbl = null;
+            _myDot = null;
+            _myRow = null;
+            _memberCount.Text = "👥 0명";
+        }
         // 참여자 행 추가
         public void AddParticipant(string name, bool isSpeaking)
         {
