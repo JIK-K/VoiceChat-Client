@@ -14,7 +14,9 @@ namespace VoiceChat.Forms
 
         private ITcpManager _tcp;
         private MainForm _mainForm;
-        private string _nickname; 
+
+        private int _myUserId;
+
         private bool _joined = false;
 
 
@@ -25,11 +27,10 @@ namespace VoiceChat.Forms
             InitializeLayout();
         }
 
-        public RoomForm(string nickname, ITcpManager tcp, MainForm mainForm)
+        public RoomForm(ITcpManager tcp, MainForm mainForm)
         {
             InitializeComponent();
 
-            _nickname = nickname;
             _tcp = tcp;
             _mainForm = mainForm;
 
@@ -95,10 +96,10 @@ namespace VoiceChat.Forms
             }));
         }
 
-        private void OnUserJoined(string username)
+        private void OnUserJoined(int id)
         {
             Invoke((Action)(() =>
-                _voicePanel.AddParticipant(username, isSpeaking: false)));
+                _voicePanel.AddParticipant(id.ToString(), isSpeaking: false)));
         }
 
         private void OnUserLeft(string username)
@@ -123,8 +124,9 @@ namespace VoiceChat.Forms
             {
                 if (!_joined)
                 {
-                    _voicePanel.AddParticipant(_nickname, isSpeaking: false); // 나 자신
-                    _tcp.JoinVoiceChannel(channelName); // 서버에 입장 알림
+                    _voicePanel.AddParticipant(_myUserId.ToString(), isSpeaking: false); // 나 자신
+                                                                             
+                    _tcp.JoinRoom(_myUserId, 0);
                     _joined = true;
                 }
                 _voicePanel.Visible = true;

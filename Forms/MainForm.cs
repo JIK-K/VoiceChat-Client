@@ -11,8 +11,7 @@ namespace VoiceChat
 
     public partial class MainForm : MaterialForm
     {
-        private ITcpManager _tcp = new TestTcpManager();
-        private string _nickname = "테스트유저";
+        private ITcpManager _tcp = new TcpManager();
         private List<RoomInfo> _currentRooms = new List<RoomInfo>();
 
 
@@ -51,7 +50,7 @@ namespace VoiceChat
         {
             Invoke((Action)(() =>
             {
-                var roomForm = new RoomForm(_nickname, _tcp, this); // this 추가
+                var roomForm = new RoomForm( _tcp, this); // this 추가
                 roomForm.Show();
                 this.Hide();
             }));
@@ -103,7 +102,7 @@ namespace VoiceChat
             MessageBox.Show($"{roomName} 입장 요청을 보냅니다.");
 
             //이민하 : 테스트 코드 추가
-            _tcp.Connect("127.0.0.1", 9000, _nickname);
+            _tcp.Connect("127.0.0.1", 9000);
 
         }
 

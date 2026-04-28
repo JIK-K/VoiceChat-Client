@@ -23,7 +23,7 @@ namespace VoiceChat
 
 #if DEBUG
             // 테스트 모드: TestTcpManager 사용
-            ITcpManager tcp = new TestTcpManager();
+            ITcpManager tcp = new TcpManager();
 #else
         // 실제 모드: 팀원 TcpManager 사용
         ITcpManager tcp = new TcpManager();
