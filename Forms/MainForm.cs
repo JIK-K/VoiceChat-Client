@@ -4,15 +4,22 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using VoiceChat.Audio;
 using VoiceChat.Forms;
+using VoiceChat.protocol;
 
 namespace VoiceChat
 {
 
     public partial class MainForm : MaterialForm
     {
+
         private ITcpManager _tcp = new TcpManager();
         private List<RoomInfo> _currentRooms = new List<RoomInfo>();
+        // Audio Test Code
+        private AudioCapture _audioCapture;
+        private AudioPlayback _audioPlayback;
+        private JitterBuffer _jitterBuffer;
 
 
         public MainForm()
@@ -118,8 +125,53 @@ namespace VoiceChat
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            // 3. 테스트용 가짜 데이터 (객체 리스트)
+        
             _tcp.RequestRoomList();
+
+            // Audio Test Code
+            _audioPlayback = new AudioPlayback();
+            _jitterBuffer = new JitterBuffer();
+            _audioCapture = new AudioCapture();
+
+            _audioCapture.UserId = 1;
+            _audioCapture.RoomId = 100;
+
+            // JitterBuffer → AudioPlayback 콜백 연결
+            _jitterBuffer.OnPacketReady = (opusData) =>
+            {
+
+                if (opusData == null)
+                    Console.WriteLine("[AudioPlayback] 패킷 유실 → 무음 처리");
+                else
+                    Console.WriteLine($"[AudioPlayback] PlayOpus 호출 - opusData 크기: {opusData.Length} bytes");
+
+                _audioPlayback.PlayOpus(opusData);
+
+            };
+
+            // AudioCapture → JitterBuffer 콜백 연결
+            // @Todo UDPManager로 변경
+            // JitterBuffer 콜백 연결이 아니라 서버로 전송하는 로직으로 변경해야함
+            _audioCapture.OnPacketReady = (packet) =>
+            {
+                // 패킷에서 헤더 파싱
+                if (PacketHandler.DeserializeHeader(packet, packet.Length, out PacketHeader header))
+                {
+                    Console.WriteLine($"[AudioCapture] 패킷 생성 - 크기: {packet.Length} bytes / seq: {header.Sequence}");
+
+                    // payload 추출 (헤더 13바이트 이후)
+                    byte[] opusData = new byte[header.PayloadLength];
+                    Buffer.BlockCopy(packet, PacketConstants.HEADER_SIZE, opusData, 0, header.PayloadLength);
+
+
+                    Console.WriteLine($"[JitterBuffer] Push - seq: {header.Sequence} / 버퍼 크기: {header.PayloadLength} bytes");
+                    _jitterBuffer.Push(header, opusData);
+
+                }
+            };
+
+            _audioPlayback.Start();
+            _audioCapture.Start();
         }
 
         private void CreateRoomButton_Click(object sender, EventArgs e)
@@ -139,12 +191,6 @@ namespace VoiceChat
                 }
                
             }
-
-
-            // 서버에 요청
-            //_tcp.CreateRoom(dialog.RoomName);
-            // 서버가 OnRoomListReceived로 갱신된 목록 보내주면 자동 갱신
-            // 조인은 OnRoomCreated에서 자동으로
         }
         
     }

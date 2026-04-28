@@ -20,7 +20,6 @@ namespace VoiceChat
 
             var mainForm = new MainForm();
 
-
 #if DEBUG
             // 테스트 모드: TestTcpManager 사용
             ITcpManager tcp = new TcpManager();
@@ -29,9 +28,8 @@ namespace VoiceChat
         ITcpManager tcp = new TcpManager();
 #endif
 
-            //var controller = new MainFormController(mainForm, tcp);
             Application.Run(mainForm);
-            //Application.Run(new RoomForm());
+           
         }
     }
 }
