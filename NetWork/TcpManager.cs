@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
@@ -70,16 +70,32 @@ namespace VoiceChat.Forms
 
         public void JoinRoom(int userId, int roomId)
         {
-            Send(new { cmd = "join", userId = userId, roomId = roomId });
+            var payload = new { cmd = "join", userId = userId, roomId = roomId };
+            SendPacket(PacketConstants.PACKET_TYPE_CONTROL, userId, roomId, payload);
         }
 
+        private void SendPacket(byte type, int userId, int roomId, object obj)
+        {
+            var json = JsonSerializer.Serialize(obj);
+            var payloadData = Encoding.UTF8.GetBytes(json);
 
+            PacketHeader header = new PacketHeader
+            {
+                Type = type,
+                RoomId = roomId,
+                UserId = userId,
+                Sequence = 0,
+                PayloadLength = (ushort)payloadData.Length
+            };
+
+            byte[] packetData = PacketHandler.Serialize(header, payloadData);
+            _stream.Write(packetData, 0, packetData.Length);
+        }
 
         private void Send(object obj)
         {
-            var json = JsonSerializer.Serialize(obj);
-            var data = Encoding.UTF8.GetBytes(json + "\n");
-            _stream.Write(data, 0, data.Length);
+            // 하위 호환성을 위해 유지하거나 SendPacket으로 통합
+            SendPacket(PacketConstants.PACKET_TYPE_CONTROL, MyUserId, 0, obj);
         }
         //public void JoinVoiceChannel(string channelName)
         //{
@@ -101,8 +117,9 @@ namespace VoiceChat.Forms
         }
 
 
-        private void ParseEvent(string json)
+        private void ParseEvent(byte[] payload)
         {
+            string json = Encoding.UTF8.GetString(payload);
             var doc = JsonDocument.Parse(json);
             var evt = doc.RootElement.GetProperty("event").GetString();
 
@@ -173,7 +190,7 @@ namespace VoiceChat.Forms
                         // 4. JSON 변환 후 파싱
                         string json = Encoding.UTF8.GetString(payload);
                         Console.WriteLine($"[TcpManager] 수신: {json}");
-                        ParseEvent(json);
+                        ParseEvent(payload);
                     }
                     catch (Exception ex)
                     {
