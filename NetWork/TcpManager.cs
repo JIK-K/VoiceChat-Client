@@ -3,39 +3,44 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 using System.Text.Json;
+using System.Threading.Tasks;
+using VoiceChat.protocol;
 
 
 namespace VoiceChat.Forms
 {
     internal class TcpManager : ITcpManager
     {
-        public event Action OnConnected;
-        public event Action<string> OnConnectFailed;
-        //public event Action<string> OnUserJoined;
-        public event Action<string> OnUserLeft;
-        public event Action<List<RoomInfo>> OnRoomListReceived;
-        public event Action<List<string>> OnUserListReceived;
         
+        public event Action<string> OnConnectFailed;
+        public event Action<List<RoomInfo>> OnRoomListReceived;
+
+
+        public event Action<List<string>> OnUserListReceived;
+        public event Action<string> OnUserLeft;
 
         private TcpClient _client;
         private NetworkStream _stream;
 
+        public event Action<int> OnConnected;
         public event Action<int> OnUserJoined;
         public event Action<string> OnRoomCreated;
 
         public void RequestRoomList()
         {
-            Console.WriteLine("[TEST] RequestRoomList 호출");
+            Console.WriteLine("[TcpManager] RequestRoomList 호출");
 
-            Task.Delay(500).ContinueWith(_ =>
-               OnRoomListReceived?.Invoke(new List<RoomInfo>
-               {
-                    new RoomInfo { Name = "room1",},
-                   new RoomInfo { Name = "room2",},
-                   new RoomInfo { Name = "room3",}
-               }));
+            if (_stream == null)
+            {
+                Console.WriteLine("[TcpManager] RequestRoomList 실패 - _stream이 null (연결 안됨)");
+                return;
+            }
+
+            Console.WriteLine("[TcpManager] room_list 패킷 전송");
+
+
+            Send(new { cmd = "room_list" });
         }
 
         public void Connect(string ip, int port)
@@ -48,7 +53,10 @@ namespace VoiceChat.Forms
                     await _client.ConnectAsync(ip, port);
                     _stream = _client.GetStream();
 
-                    OnConnected?.Invoke();
+
+                    int userId = ((System.Net.IPEndPoint)_client.Client.LocalEndPoint).Port;
+
+                    OnConnected?.Invoke(userId);
 
                     // 수신 루프
                     ReceiveLoop();
@@ -109,6 +117,7 @@ namespace VoiceChat.Forms
                 //    OnUserListReceived?.Invoke(users);
                 //    break;
 
+
                 case "user_joined":
                     var joinedId = doc.RootElement.GetProperty("userId").GetInt32();
                     OnUserJoined?.Invoke(joinedId);
@@ -118,6 +127,21 @@ namespace VoiceChat.Forms
                 //    var leftId = doc.RootElement.GetProperty("userId").GetInt32();
                 //    OnUserLeft?.Invoke(leftId);
                 //    break;
+
+                case "room_list":
+                    var rooms = doc.RootElement
+                        .GetProperty("rooms")
+                        .EnumerateArray()
+                        .Select(r => new RoomInfo
+                        {
+                            RoomId = r.GetProperty("roomId").GetInt32(),
+                            //Name = $"방 {r.GetProperty("roomId").GetInt32()}", // roomId로 이름 대체
+                           
+                        })
+                        .ToList();
+                    OnRoomListReceived?.Invoke(rooms);
+                    break;
+
             }
         }
 
@@ -125,20 +149,53 @@ namespace VoiceChat.Forms
         {
             Task.Run(() =>
             {
-                var buffer = new byte[4096];
+                Console.WriteLine("[TcpManager] ReceiveLoop 시작");
                 while (true)
                 {
                     try
                     {
-                        int n = _stream.Read(buffer, 0, buffer.Length);
-                        if (n == 0) break;
+                        // 1. 헤더 13바이트 먼저 읽기
+                        byte[] headerBuf = new byte[PacketConstants.HEADER_SIZE];
+                        int bytesRead = ReadExact(_stream, headerBuf, PacketConstants.HEADER_SIZE);
+                        if (bytesRead == 0) break;
 
-                        var json = Encoding.UTF8.GetString(buffer, 0, n);
-                        ParseEvent(json); // 수신하면 바로 파싱
+                        // 2. 헤더 파싱
+                        if (!PacketHandler.DeserializeHeader(headerBuf, bytesRead, out PacketHeader header))
+                        {
+                            Console.WriteLine("[TcpManager] 헤더 파싱 실패");
+                            continue;
+                        }
+
+                        // 3. payload 읽기
+                        byte[] payload = new byte[header.PayloadLength];
+                        ReadExact(_stream, payload, header.PayloadLength);
+
+                        // 4. JSON 변환 후 파싱
+                        string json = Encoding.UTF8.GetString(payload);
+                        Console.WriteLine($"[TcpManager] 수신: {json}");
+                        ParseEvent(json);
                     }
-                    catch { break; }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[TcpManager] ReceiveLoop 예외: {ex.Message}");
+                        break;
+                    }
                 }
+                Console.WriteLine("[TcpManager] ReceiveLoop 종료");
             });
+        }
+
+        // 정확히 n바이트 읽는 헬퍼 메서드
+        private int ReadExact(NetworkStream stream, byte[] buffer, int count)
+        {
+            int total = 0;
+            while (total < count)
+            {
+                int n = stream.Read(buffer, total, count - total);
+                if (n == 0) return 0;
+                total += n;
+            }
+            return total;
         }
     }
 }

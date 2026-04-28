@@ -16,23 +16,18 @@ namespace VoiceChat.Forms
         private MainForm _mainForm;
 
         private int _myUserId;
+        private int _myRoomId;
 
         private bool _joined = false;
 
-
-        public RoomForm()
-        {
-            InitializeComponent();
-            InitializeMaterialSkin();
-            InitializeLayout();
-        }
-
-        public RoomForm(ITcpManager tcp, MainForm mainForm)
+        public RoomForm(ITcpManager tcp, MainForm mainForm, int myUserId, int myRoomId)
         {
             InitializeComponent();
 
             _tcp = tcp;
             _mainForm = mainForm;
+            _myUserId = myUserId;
+            _myRoomId = myRoomId;   
 
             SubscribeEvents();
 
@@ -84,7 +79,7 @@ namespace VoiceChat.Forms
         {
             _tcp.OnUserListReceived += OnUserListReceived;
             _tcp.OnUserJoined += OnUserJoined;
-           _tcp.OnUserLeft += OnUserLeft;
+            _tcp.OnUserLeft += OnUserLeft;
         }
 
         private void OnUserListReceived(List<string> users)
@@ -126,7 +121,7 @@ namespace VoiceChat.Forms
                 {
                     _voicePanel.AddParticipant(_myUserId.ToString(), isSpeaking: false); // 나 자신
                                                                              
-                    _tcp.JoinRoom(_myUserId, 0);
+                    _tcp.JoinRoom(_myUserId, _myRoomId);
                     _joined = true;
                 }
                 _voicePanel.Visible = true;

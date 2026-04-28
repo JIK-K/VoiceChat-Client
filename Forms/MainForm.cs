@@ -21,6 +21,9 @@ namespace VoiceChat
         private AudioPlayback _audioPlayback;
         private JitterBuffer _jitterBuffer;
 
+        private int _myUserId;
+       // private int _myRoomId;
+
 
         public MainForm()
         {
@@ -50,27 +53,22 @@ namespace VoiceChat
             _tcp.OnConnected += OnConnected;
             _tcp.OnConnectFailed += OnConnectFailed;
             _tcp.OnRoomListReceived += OnRoomListReceived;
-            _tcp.OnRoomCreated += OnRoomCreated;
+            //_tcp.OnRoomCreated += OnRoomCreated;
         }
 
-        private void OnConnected()
+        private void OnConnected(int userId)
         {
-            Invoke((Action)(() =>
-            {
-                var roomForm = new RoomForm( _tcp, this); // this 추가
-                roomForm.Show();
-                this.Hide();
-            }));
+
+            _myUserId = userId;
+            _tcp.RequestRoomList();
+
         }
 
         private void OnConnectFailed(string msg)
         {
             Invoke((Action)(() => MessageBox.Show(msg, "연결 실패")));
         }
-        private void OnRoomCreated(string roomName)
-        {
-            Invoke((Action)(() => JoinRoomRequest(roomName)));
-        }
+
 
         // 2. 이제 List<string>이 아닌 List<RoomInfo>를 받습니다.
         private void UpdateRoomList(List<RoomInfo> rooms)
@@ -96,7 +94,7 @@ namespace VoiceChat
                 // 너비 계산 (생성자에서 정의한 규칙과 동일하게)
                 //item.Width = RoomLayoutPanel.ClientSize.Width - RoomLayoutPanel.Padding.Horizontal - 5;
 
-                item.OnJoinClick += (s, e) => JoinRoomRequest(room.Name);
+                item.OnJoinClick += (s, e) => JoinRoomRequest(room.RoomId);
 
                 RoomLayoutPanel.Controls.Add(item);
             }
@@ -104,12 +102,14 @@ namespace VoiceChat
             RoomLayoutPanel.ResumeLayout();
         }
 
-        private void JoinRoomRequest(string roomName)
+        private void JoinRoomRequest(int roomId)
         {
-            MessageBox.Show($"{roomName} 입장 요청을 보냅니다.");
+           // MessageBox.Show($"{roomId} 입장 요청을 보냅니다.");
 
-            //이민하 : 테스트 코드 추가
-            _tcp.Connect("127.0.0.1", 9000);
+            _tcp.JoinRoom(_myUserId, roomId);
+            var roomForm = new RoomForm(_tcp, this, _myUserId, roomId);
+            roomForm.Show();
+            this.Hide();
 
         }
 
@@ -125,8 +125,10 @@ namespace VoiceChat
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-        
-            _tcp.RequestRoomList();
+
+ 
+            _tcp.Connect("127.0.0.1", 9000);
+            //_tcp.RequestRoomList();
 
             // Audio Test Code
             _audioPlayback = new AudioPlayback();
@@ -140,10 +142,10 @@ namespace VoiceChat
             _jitterBuffer.OnPacketReady = (opusData) =>
             {
 
-                if (opusData == null)
-                    Console.WriteLine("[AudioPlayback] 패킷 유실 → 무음 처리");
-                else
-                    Console.WriteLine($"[AudioPlayback] PlayOpus 호출 - opusData 크기: {opusData.Length} bytes");
+                //if (opusData == null)
+                //    Console.WriteLine("[AudioPlayback] 패킷 유실 → 무음 처리");
+                //else
+                //    Console.WriteLine($"[AudioPlayback] PlayOpus 호출 - opusData 크기: {opusData.Length} bytes");
 
                 _audioPlayback.PlayOpus(opusData);
 
@@ -157,14 +159,14 @@ namespace VoiceChat
                 // 패킷에서 헤더 파싱
                 if (PacketHandler.DeserializeHeader(packet, packet.Length, out PacketHeader header))
                 {
-                    Console.WriteLine($"[AudioCapture] 패킷 생성 - 크기: {packet.Length} bytes / seq: {header.Sequence}");
+                    //Console.WriteLine($"[AudioCapture] 패킷 생성 - 크기: {packet.Length} bytes / seq: {header.Sequence}");
 
                     // payload 추출 (헤더 13바이트 이후)
                     byte[] opusData = new byte[header.PayloadLength];
                     Buffer.BlockCopy(packet, PacketConstants.HEADER_SIZE, opusData, 0, header.PayloadLength);
 
 
-                    Console.WriteLine($"[JitterBuffer] Push - seq: {header.Sequence} / 버퍼 크기: {header.PayloadLength} bytes");
+                   // Console.WriteLine($"[JitterBuffer] Push - seq: {header.Sequence} / 버퍼 크기: {header.PayloadLength} bytes");
                     _jitterBuffer.Push(header, opusData);
 
                 }
@@ -180,16 +182,16 @@ namespace VoiceChat
             if (dialog.ShowDialog() == DialogResult.OK)
             {
 
-                //임시 테스트용 코드
+                var newRoom = new RoomInfo
                 {
-                    // UI만 추가
-                    _currentRooms.Add(new RoomInfo { Name = dialog.RoomName });
-                    UpdateRoomList(_currentRooms);
+                    Name = dialog.RoomName,
+                    RoomId = new Random().Next(1, 9999)
+                };
 
-                    // 바로 조인
-                    JoinRoomRequest(dialog.RoomName);
-                }
-               
+                _currentRooms.Add(newRoom);
+                UpdateRoomList(_currentRooms);
+
+                JoinRoomRequest(newRoom.RoomId); 
             }
         }
         
@@ -200,7 +202,7 @@ namespace VoiceChat
     public class RoomInfo
     {
         public string Name { get; set; }
-        //public int CurrentUsers { get; set; }
-        //public int MaxUsers { get; set; }
+        public int RoomId { get; set; }
+
     }
 }
