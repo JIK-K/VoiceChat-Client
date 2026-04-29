@@ -114,10 +114,14 @@ namespace VoiceChat.Forms
 
         private void OnLeaveRoom()
         {
-            // 나중에 _tcp.LeaveRoom() 호출
+            _tcp.OnUserListReceived -= OnUserListReceived;
+            _tcp.OnUserJoined -= OnUserJoined;
+            _tcp.OnUserLeft -= OnUserLeft;
+
             _tcp.LeaveRoom(_myUserId, _myRoomId); // 방 나가기 요청
            // _tcp.RequestRoomList();
             _mainForm.Show();
+           
             this.Close();
         }
 
@@ -132,21 +136,13 @@ namespace VoiceChat.Forms
                 {
                     _voicePanel.AddParticipant(_myUserId.ToString(), isSpeaking: false); // 나 자신
                                                                              
-                    _tcp.JoinRoom(_myUserId, _myRoomId);
+                   
                     _joined = true;
                 }
                 _voicePanel.Visible = true;
             }
             else
                 _chatPanel.Visible = true;
-        }
-
-        protected override void OnFormClosing(FormClosingEventArgs e)
-        {
-            _tcp.OnUserListReceived -= OnUserListReceived;
-            _tcp.OnUserJoined -= OnUserJoined;
-            _tcp.OnUserLeft -= OnUserLeft;
-            base.OnFormClosing(e);
         }
         private void RoomForm_Load(object sender, System.EventArgs e) { }
     }

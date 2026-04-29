@@ -14,6 +14,7 @@ namespace VoiceChat.Forms
         event Action<int> OnUserLeft;
         event Action<List<int>> OnUserListReceived;
         event Action<List<RoomInfo>> OnRoomListReceived;
+        event Action OnLeaveSuccess;
 
         void Connect(string ip, int port);
         void RequestRoomList();

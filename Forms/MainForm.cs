@@ -53,6 +53,7 @@ namespace VoiceChat
             _tcp.OnConnected += OnConnected;
             _tcp.OnConnectFailed += OnConnectFailed;
             _tcp.OnRoomListReceived += OnRoomListReceived;
+            _tcp.OnLeaveSuccess += OnLeaveSuccess;
         }
 
         private void OnConnected(int userId)
@@ -103,12 +104,18 @@ namespace VoiceChat
 
         private void JoinRoomRequest(int roomId)
         {
-           // MessageBox.Show($"{roomId} 입장 요청을 보냅니다.");
 
+            _tcp.Connect("127.0.0.1", 9000);
             var roomForm = new RoomForm(_tcp, this, _myUserId, roomId);
+            _tcp.JoinRoom(_myUserId, roomId);
             roomForm.Show();
             this.Hide();
 
+        }
+
+        private void OnLeaveSuccess()
+        {
+            Invoke((Action)(() => RefreshRoomList()));
         }
 
         private void OnRoomListReceived(List<RoomInfo> rooms)
@@ -120,12 +127,13 @@ namespace VoiceChat
             }));
         }
 
-
+        public void RefreshRoomList()
+        {
+            _tcp.RequestRoomList(); // 서버에 room_list 재요청
+        }
         private void MainForm_Load(object sender, EventArgs e)
         {
-
- 
-            _tcp.Connect("127.0.0.1", 9000);
+           
 
             // Audio Test Code
             _audioPlayback = new AudioPlayback();

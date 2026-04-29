@@ -18,6 +18,7 @@ internal class TcpManager : ITcpManager
     public event Action<int> OnUserLeft;           // string → int
     public event Action<List<int>> OnUserListReceived; // List<string> → List<int>
     public event Action<List<RoomInfo>> OnRoomListReceived;
+    public event Action OnLeaveSuccess;
 
     // ── 필드 ──
     private TcpClient _client;
@@ -97,9 +98,21 @@ internal class TcpManager : ITcpManager
     private void ParseEvent(byte[] payload)
     {
         string json = Encoding.UTF8.GetString(payload);
+
         Console.WriteLine($"[TcpManager] ParseEvent: {json}");
+
         var doc = JsonDocument.Parse(json);
-        var evt = doc.RootElement.GetProperty("event").GetString();
+        // result:ok 먼저 체크
+        if (doc.RootElement.TryGetProperty("result", out var result)
+            && result.GetString() == "ok")
+        {
+            OnLeaveSuccess?.Invoke();
+            return;
+        }
+
+        // event 없으면 그냥 리턴
+        if (!doc.RootElement.TryGetProperty("event", out var evtProp)) return;
+        var evt = evtProp.GetString();
 
         switch (evt)
         {
@@ -139,6 +152,7 @@ internal class TcpManager : ITcpManager
                 Console.WriteLine($"[TcpManager] user_left: {leftId}");
                 OnUserLeft?.Invoke(leftId);
                 break;
+
         }
     }
 
@@ -164,12 +178,6 @@ internal class TcpManager : ITcpManager
                     byte[] payload = new byte[header.PayloadLength];
                     ReadExact(_stream, payload, header.PayloadLength);
 
-                    // 로그 추가 - 바이트 그대로 출력
-                   // Console.WriteLine($"[TcpManager] PayloadLength: {header.PayloadLength}");
-                    //Console.WriteLine($"[TcpManager] 실제 바이트: {BitConverter.ToString(payload)}");
-
-                   // string raw = Encoding.UTF8.GetString(payload);
-                    //Console.WriteLine($"[TcpManager] raw 문자열: {raw}");
 
                     ParseEvent(payload);
                 }
