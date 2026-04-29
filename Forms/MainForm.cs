@@ -14,14 +14,8 @@ namespace VoiceChat
 
     public partial class MainForm : MaterialForm
     {
-
         private ITcpManager _tcp = new TcpManager();
         private List<RoomInfo> _currentRooms = new List<RoomInfo>();
-        // Audio Test Code
-        private AudioCapture _audioCapture;
-        private AudioPlayback _audioPlayback;
-        private JitterBuffer _jitterBuffer;
-        private UdpManager _udpManager;
 
         private int _myUserId;
        // private int _myRoomId;
@@ -47,8 +41,6 @@ namespace VoiceChat
                 TextShade.WHITE
             );
         }
-
-
 
         private void SubscribeEvents()
         {
@@ -86,8 +78,8 @@ namespace VoiceChat
             foreach (var room in rooms)
             {
                 RoomItemControl item = new RoomItemControl();
-                item.RoomName = room.Name;
-                //item.RoomCount = $"{room.CurrentUsers}/{room.MaxUsers}";
+                item.RoomName = "방 이름 : " + room.RoomId.ToString();
+                item.RoomCount = room.CurrentUsers.ToString() + "명";
 
                 // 아이템 간의 간격(Gap)만 설정
                 item.Margin = new Padding(0, 0, 0, 10);
@@ -125,33 +117,7 @@ namespace VoiceChat
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-
- 
             _tcp.Connect("127.0.0.1", 9000);
-
-            // Audio Test Code
-            _audioPlayback = new AudioPlayback();
-            _jitterBuffer = new JitterBuffer();
-            _audioCapture = new AudioCapture();
-            _udpManager = new UdpManager("127.0.0.1", 9001);
-
-            _audioCapture.UserId = 1;
-            _audioCapture.RoomId = 100;
-
-
-            _audioCapture.OnPacketReady = (packet) =>
-            {
-                _udpManager.Send(packet);
-            };
-
-            _udpManager.OnVoiceReceived = (header, opusData) =>
-            {
-                _jitterBuffer.Push(header, opusData);
-            };
-
-            _audioPlayback.Start();
-            _udpManager.Start();
-            _audioCapture.Start();
         }
 
         private void CreateRoomButton_Click(object sender, EventArgs e)
@@ -162,7 +128,7 @@ namespace VoiceChat
 
                 var newRoom = new RoomInfo
                 {
-                    Name = dialog.RoomName,
+                    //Name = dialog.RoomName,
                     RoomId = new Random().Next(1, 9999)
                 };
 
@@ -181,7 +147,6 @@ namespace VoiceChat
     {
         public string Name { get; set; }
         public int RoomId { get; set; }
-
         public int CurrentUsers { get; set; } 
 
     }

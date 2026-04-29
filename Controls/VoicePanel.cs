@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+using System.Drawing;
 using System.Windows.Forms;
 using MaterialSkin.Controls;
 
@@ -14,7 +14,7 @@ namespace VoiceChat.Forms
         private readonly Color COL_TEXT_MUTED = Color.FromArgb(120, 124, 130);
         private readonly Color COL_GREEN = Color.FromArgb(59, 165, 93);
 
-        private bool _isMuted = false;
+        private bool _isMuted = true; // 초기 상태: 음소거(꺼짐)
         private Panel _participantList;  
         private MaterialLabel _memberCount;
 
@@ -22,8 +22,8 @@ namespace VoiceChat.Forms
         private Panel _myDot = null;
         private Panel _myRow = null;
         private MaterialButton btnMic;
-
         public event System.Action OnLeaveClick;
+        public event System.Action<bool> OnMicToggle; // 추가: true=음소거됨, false=활성
 
         public VoicePanel()
         {
@@ -86,13 +86,13 @@ namespace VoiceChat.Forms
 
             btnMic = new MaterialButton
             {
-                Text = "🎙 마이크",
+                Text = "🎙 켜기", // 초기 상태가 Muted이므로 "켜기" 표시
                 Left = 16,
                 Top = 12,
                 Width = 110,
                 Height = 36,
                 AutoSize = false,
-                Type = MaterialButton.MaterialButtonType.Outlined
+                Type = MaterialButton.MaterialButtonType.Outlined // 껴졌을 때 강조되지 않은 스타일
             };
             btnMic.Click += OnMicClick;
 
@@ -227,13 +227,20 @@ namespace VoiceChat.Forms
         private void OnMicClick(object sender, System.EventArgs e)
         {
             _isMuted = !_isMuted;
-            btnMic.Text = _isMuted ? "🎙 마이크" : "🔇 음소거";
+            
+            // UI 업데이트
+            btnMic.Text = _isMuted ? "🎙 켜기" : "🔇 끄기";
+            btnMic.Type = _isMuted ? MaterialButton.MaterialButtonType.Outlined : MaterialButton.MaterialButtonType.Contained;
 
-            if (_myMicLbl == null) return;  // 아직 아무도 없으면 무시
+            if (_myMicLbl != null)
+            {
+                _myMicLbl.Text = _isMuted ? "🔇" : "🎙";
+                _myMicLbl.ForeColor = _isMuted ? COL_TEXT_MUTED : COL_GREEN;
+                _myDot.BackColor = _isMuted ? COL_TEXT_MUTED : COL_GREEN;
+            }
 
-            _myMicLbl.Text = _isMuted ? "🎙" : "🔇";
-            _myMicLbl.ForeColor = _isMuted ? COL_GREEN : COL_TEXT_MUTED;
-            _myDot.BackColor = _isMuted ? COL_GREEN : COL_TEXT_MUTED;
+            // 이벤트 발생 (true: 음소거, false: 말하기)
+            OnMicToggle?.Invoke(_isMuted);
         }
     }
 }

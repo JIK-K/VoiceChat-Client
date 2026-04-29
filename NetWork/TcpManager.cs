@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -38,8 +39,8 @@ internal class TcpManager : ITcpManager
                 await _client.ConnectAsync(ip, port);
                 _stream = _client.GetStream();
 
-                _UserId = ((System.Net.IPEndPoint)_client.Client.LocalEndPoint).Port;
-                OnConnected?.Invoke(_UserId);
+                //_UserId = ((System.Net.IPEndPoint)_client.Client.LocalEndPoint).Port;
+                //OnConnected?.Invoke(_UserId);
                 ReceiveLoop();
             }
             catch (Exception ex)
@@ -96,13 +97,27 @@ internal class TcpManager : ITcpManager
 
     private void ParseEvent(byte[] payload)
     {
+        Console.WriteLine($"헤더 크기: {Marshal.SizeOf<PacketHeader>()}"); // 반드시 13이어야 함
         string json = Encoding.UTF8.GetString(payload);
         Console.WriteLine($"[TcpManager] ParseEvent: {json}");
         var doc = JsonDocument.Parse(json);
-        var evt = doc.RootElement.GetProperty("event").GetString();
+
+        // "event" 키가 없으면 무시 (예: {"result":"ok"} 응답 등)
+        if (!doc.RootElement.TryGetProperty("event", out var eventProp))
+        {
+            Console.WriteLine($"[TcpManager] result 패킷 무시: {json}");
+            return;
+        }
+
+        var evt = eventProp.GetString();
 
         switch (evt)
         {
+            case "connected":
+                _UserId = doc.RootElement.GetProperty("userId").GetInt32();
+                Console.WriteLine($"[TcpManager] connected - userId: {_UserId}");
+                OnConnected?.Invoke(_UserId);
+                break;
             case "room_list":
                 var rooms = doc.RootElement
                     .GetProperty("rooms")

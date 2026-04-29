@@ -1,8 +1,11 @@
-﻿using MaterialSkin;
+using MaterialSkin;
 using MaterialSkin.Controls;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using VoiceChat.Audio;
+using VoiceChat.NetWork;
+using VoiceChat.protocol;
 
 namespace VoiceChat.Forms
 {
@@ -17,8 +20,14 @@ namespace VoiceChat.Forms
 
         private int _myUserId;
         private int _myRoomId;
+        // ── 음성 채팅 관련 필드 ──
+        private UdpManager _udp;
+        private AudioCapture _capture;
+        // 다른 사용자별 재생기 관리 (UserId -> (JitterBuffer, AudioPlayback))
+        private Dictionary<int, (JitterBuffer jitter, AudioPlayback playback)> _remotePlayers 
+            = new Dictionary<int, (JitterBuffer, AudioPlayback)>();
 
-        private bool _joined = false;
+        private bool _isVoiceConnected = false;
 
         public RoomForm(ITcpManager tcp, MainForm mainForm, int myUserId, int myRoomId)
         {
@@ -29,10 +38,24 @@ namespace VoiceChat.Forms
             _myUserId = myUserId;
             _myRoomId = myRoomId;   
 
-            SubscribeEvents();
-
             InitializeMaterialSkin();
             InitializeLayout();
+
+            SubscribeEvents();
+
+            // 1. 핸들이 생성된 후 TCP Join 호출 (Invoke 오류 방지)
+            this.HandleCreated += (s, e) => {
+                _tcp.JoinRoom(_myUserId, _myRoomId);
+            };
+
+            // 2. UDP 및 캡처 객체 초기화
+            _udp = new UdpManager("127.0.0.1", 9001); // UDP 포트는 9001로 가정
+            _udp.OnVoiceReceived = OnRemoteVoiceReceived;
+
+            _capture = new AudioCapture();
+            _capture.UserId = _myUserId;
+            _capture.RoomId = _myRoomId;
+            _capture.OnPacketReady = (packet) => _udp.Send(packet);
         }
 
 
@@ -80,6 +103,37 @@ namespace VoiceChat.Forms
             _tcp.OnUserListReceived += OnUserListReceived;
             _tcp.OnUserJoined += OnUserJoined;
             _tcp.OnUserLeft += OnUserLeft;
+
+            _voicePanel.OnMicToggle += OnMicToggle;
+        }
+
+        private void OnMicToggle(bool isMuted)
+        {
+            if (isMuted)
+                _capture.Stop();
+            else
+                _capture.Start();
+        }
+
+        // 다른 사용자의 음성 패킷을 받았을 때
+        private void OnRemoteVoiceReceived(PacketHeader header, byte[] opusData)
+        {
+            if (header.UserId == _myUserId) return; // 내 목소리 에코 방지
+
+            if (!_remotePlayers.TryGetValue(header.UserId, out var player))
+            {
+                // 새로운 사용자의 재생기 생성
+                var jitter = new JitterBuffer();
+                var playback = new AudioPlayback();
+                
+                jitter.OnPacketReady = (data) => playback.PlayOpus(data);
+                playback.Start();
+
+                player = (jitter, playback);
+                _remotePlayers[header.UserId] = player;
+            }
+
+            player.jitter.Push(header, opusData);
         }
 
         private void OnUserListReceived(List<int> users)
@@ -89,8 +143,15 @@ namespace VoiceChat.Forms
                 Console.WriteLine($"[RoomForm] user_list 수신 - {users.Count}명");
                 _voicePanel.ClearParticipants(); // 기존 목록 초기화
 
+                // 1. 나 자신 먼저 추가
+                _voicePanel.AddParticipant(_myUserId.ToString(), isSpeaking: false);
+
+                // 2. 서버 목록 중 나를 제외한 나머지 추가
                 foreach (var user in users)
+                {
+                    if (user == _myUserId) continue;
                     _voicePanel.AddParticipant(user.ToString(), isSpeaking: false);
+                }
             }));
         }
 
@@ -98,6 +159,9 @@ namespace VoiceChat.Forms
         {
             Invoke((Action)(() =>
             {
+                // 나 자신에 대한 입장 이벤트는 무시 (이미 추가됨)
+                if (userId == _myUserId) return;
+
                 Console.WriteLine($"[RoomForm] user_joined: {userId}");
                 _voicePanel.AddParticipant(userId.ToString(), isSpeaking: false);
             }));
@@ -114,6 +178,15 @@ namespace VoiceChat.Forms
 
         private void OnLeaveRoom()
         {
+            _capture.Stop();
+            _udp.Stop();
+
+            foreach (var player in _remotePlayers.Values)
+            {
+                player.playback.Dispose();
+            }
+            _remotePlayers.Clear();
+
             // 나중에 _tcp.LeaveRoom() 호출
             _tcp.LeaveRoom(_myUserId, _myRoomId); // 방 나가기 요청
            // _tcp.RequestRoomList();
@@ -128,12 +201,14 @@ namespace VoiceChat.Forms
 
             if (isVoice)
             {
-                if (!_joined)
+                if (!_isVoiceConnected)
                 {
-                    _voicePanel.AddParticipant(_myUserId.ToString(), isSpeaking: false); // 나 자신
+                    // 나 자신은 OnUserListReceived 또는 여기서 명시적으로 한 번만 추가됨
+                    // _voicePanel.AddParticipant(_myUserId.ToString(), isSpeaking: false); 
                                                                              
-                    _tcp.JoinRoom(_myUserId, _myRoomId);
-                    _joined = true;
+                    _udp.Start();
+                    // 처음에는 마이크 꺼진 상태로 시작 (필요 시 _capture.Start() 호출)
+                    _isVoiceConnected = true;
                 }
                 _voicePanel.Visible = true;
             }
