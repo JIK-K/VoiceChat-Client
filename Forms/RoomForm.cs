@@ -49,7 +49,7 @@ namespace VoiceChat.Forms
             };
 
             // 2. UDP 및 캡처 객체 초기화
-            _udp = new UdpManager("127.0.0.1", 9001); // UDP 포트는 9001로 가정
+            _udp = new UdpManager(Environment.GetEnvironmentVariable("SERVER_IP"), 9001); // UDP 포트는 9001로 가정
             _udp.OnVoiceReceived = OnRemoteVoiceReceived;
 
             _capture = new AudioCapture();

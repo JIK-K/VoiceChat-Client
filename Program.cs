@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using VoiceChat.Forms;
+using DotNetEnv;
 
 namespace VoiceChat
 {
@@ -17,6 +18,8 @@ namespace VoiceChat
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
+            Env.Load();
 
             var mainForm = new MainForm();
 

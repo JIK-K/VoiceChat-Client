@@ -117,7 +117,7 @@ namespace VoiceChat
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            _tcp.Connect("127.0.0.1", 9000);
+            _tcp.Connect(Environment.GetEnvironmentVariable("SERVER_IP"), 9000);
         }
 
         private void CreateRoomButton_Click(object sender, EventArgs e)
