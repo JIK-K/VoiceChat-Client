@@ -26,7 +26,7 @@ namespace VoiceChat
   
             ITcpManager tcp = new TcpManager();
 
-            Logger.Instance.Init($"client_{DateTime.Now:yyyyMMdd}.log");
+            Logger.Instance.Init("client");
 
             Application.Run(mainForm);
 

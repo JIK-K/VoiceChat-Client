@@ -30,7 +30,10 @@ namespace VoiceChat.Utils
 
         public void Init(string filename = "client.log")
         {
-            logFile = new StreamWriter(filename, append: true);
+            int pid = System.Diagnostics.Process.GetCurrentProcess().Id;
+            string logFileName = $"{filename}_{DateTime.Now:yyyyMMdd}_{pid}.log";
+
+            logFile = new StreamWriter(logFileName, append: true);
             logFile.AutoFlush = true;
         }
 
