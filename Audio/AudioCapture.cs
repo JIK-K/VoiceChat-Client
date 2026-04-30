@@ -3,6 +3,7 @@ using Concentus.Enums;
 using NAudio.Wave;
 using System;
 using VoiceChat.protocol;
+using VoiceChat.Utils;
 
 namespace VoiceChat.Audio
 {
@@ -42,12 +43,14 @@ namespace VoiceChat.Audio
 
         public void Start()
         {
+            Logger.Instance.Log("INFO", $"마이크 캡처 시작 - userId: {UserId}");
             _sequence = 0;
             _waveIn.StartRecording();
         }
 
         public void Stop()
         {
+            Logger.Instance.Log("INFO", $"마이크 캡처 중지 - userId: {UserId}");
             _waveIn.StopRecording();
         }
 

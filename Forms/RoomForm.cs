@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using VoiceChat.Audio;
 using VoiceChat.NetWork;
 using VoiceChat.protocol;
+using VoiceChat.Utils;
 
 namespace VoiceChat.Forms
 {
@@ -45,6 +46,7 @@ namespace VoiceChat.Forms
 
             // 1. 핸들이 생성된 후 TCP Join 호출 (Invoke 오류 방지)
             this.HandleCreated += (s, e) => {
+                Logger.Instance.Log("INFO", $"방 입장 - roomId: {_myRoomId}, userId: {_myUserId}");  // 추가
                 _tcp.JoinRoom(_myUserId, _myRoomId);
             };
 
@@ -122,6 +124,7 @@ namespace VoiceChat.Forms
 
             if (!_remotePlayers.TryGetValue(header.UserId, out var player))
             {
+                Logger.Instance.Log("INFO", $"음성 수신 시작 - userId: {header.UserId}");
                 // 새로운 사용자의 재생기 생성
                 var jitter = new JitterBuffer();
                 var playback = new AudioPlayback();
@@ -140,7 +143,9 @@ namespace VoiceChat.Forms
         {
             Invoke((Action)(() =>
             {
-                Console.WriteLine($"[RoomForm] user_list 수신 - {users.Count}명");
+                Logger.Instance.Log("INFO", $"방 유저 목록 수신 - {users.Count}명");  // 추가
+
+                //Console.WriteLine($"[RoomForm] user_list 수신 - {users.Count}명");
                 _voicePanel.ClearParticipants(); // 기존 목록 초기화
 
                 // 1. 나 자신 먼저 추가
@@ -162,7 +167,8 @@ namespace VoiceChat.Forms
                 // 나 자신에 대한 입장 이벤트는 무시 (이미 추가됨)
                 if (userId == _myUserId) return;
 
-                Console.WriteLine($"[RoomForm] user_joined: {userId}");
+                Logger.Instance.Log("INFO", $"유저 입장 - userId: {userId}");  // 추가
+                
                 _voicePanel.AddParticipant(userId.ToString(), isSpeaking: false);
             }));
         }
@@ -171,13 +177,14 @@ namespace VoiceChat.Forms
         {
             Invoke((Action)(() =>
             {
-                Console.WriteLine($"[RoomForm] user_left: {userId}");
+                Logger.Instance.Log("INFO", $"유저 퇴장 - userId: {userId}");  // 추가
                 _voicePanel.RemoveParticipant(userId.ToString());
             }));
         }
 
         private void OnLeaveRoom()
         {
+            Logger.Instance.Log("INFO", $"방 퇴장 - roomId: {_myRoomId}");
             _capture.Stop();
             _udp.Stop();
 
@@ -187,9 +194,7 @@ namespace VoiceChat.Forms
             }
             _remotePlayers.Clear();
 
-            // 나중에 _tcp.LeaveRoom() 호출
             _tcp.LeaveRoom(_myUserId, _myRoomId); // 방 나가기 요청
-           // _tcp.RequestRoomList();
             _mainForm.Show();
             this.Close();
         }

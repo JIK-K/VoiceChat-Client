@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using VoiceChat.protocol;
+using VoiceChat.Utils;
 
 namespace VoiceChat.NetWork
 {
@@ -36,12 +37,14 @@ namespace VoiceChat.NetWork
             }
             catch (Exception e)
             {
+                Logger.Instance.Log("ERROR", $"UDP 송신 오류 - {e.Message}");
                 Console.WriteLine($"[UdpManager] Send 실패: {e.Message}");
             }
         }
 
         public void Start()
         {
+            Logger.Instance.Log("INFO", "UDP 수신 시작");
             _running = true;
             _receivedThread = new Thread(ReceivedLoop);
             _receivedThread.IsBackground = true;
@@ -50,6 +53,7 @@ namespace VoiceChat.NetWork
 
         public void Stop()
         {
+            Logger.Instance.Log("INFO", "UDP 수신 중지");
             _running = false;
             _udpClient.Close();
         }
@@ -76,7 +80,11 @@ namespace VoiceChat.NetWork
                 catch (Exception e)
                 {
                     if(_running)
+                    {
+                        Logger.Instance.Log("ERROR", $"UDP 수신 오류 - {e.Message}");
                         Console.WriteLine($"[UdpManager] Receive 실패: {e.Message}");
+
+                    }
                 }
             }
         }

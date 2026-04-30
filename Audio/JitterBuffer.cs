@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VoiceChat.protocol;
+using VoiceChat.Utils;
 
 namespace VoiceChat.Audio
 {
@@ -62,6 +63,9 @@ namespace VoiceChat.Audio
                 }
                 else
                 {
+
+                    Logger.Instance.Log("WARN", $"패킷 손실 감지 - Sequence: {_nextSequence}");
+
                     // 해당 sequence가 없으면 유실된거
                     // null로 콜백 -> AudioPlayBack에서 무음처리
                     OnPacketReady?.Invoke(null);

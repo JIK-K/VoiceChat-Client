@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using VoiceChat;
 using VoiceChat.Forms;
 using VoiceChat.protocol;
+using VoiceChat.Utils;
 
 internal class TcpManager : ITcpManager
 {
@@ -35,6 +36,9 @@ internal class TcpManager : ITcpManager
         {
             try
             {
+                Console.WriteLine($"[TcpManager] 서버 접속 시도 - {ip}:{port}");
+                Logger.Instance.Log("INFO", $"서버 접속 시도 - {ip}:{port}");
+
                 _client = new TcpClient();
                 await _client.ConnectAsync(ip, port);
                 _stream = _client.GetStream();
@@ -45,6 +49,8 @@ internal class TcpManager : ITcpManager
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[TcpManager] Connect 예외: {ex.Message}");
+                Logger.Instance.Log("ERROR", $"서버 접속 실패 - {ex.Message}");
                 OnConnectFailed?.Invoke(ex.Message);
             }
         });
@@ -115,7 +121,10 @@ internal class TcpManager : ITcpManager
         {
             case "connected":
                 _UserId = doc.RootElement.GetProperty("userId").GetInt32();
-                Console.WriteLine($"[TcpManager] connected - userId: {_UserId}");
+
+                Console.WriteLine($"[TcpManager] 서버 접속 성공 - UserId: {_UserId}");
+                Logger.Instance.Log("INFO", $"서버 접속 성공 - UserId: {_UserId}");
+
                 OnConnected?.Invoke(_UserId);
                 break;
             case "room_list":
@@ -130,6 +139,7 @@ internal class TcpManager : ITcpManager
                     .Where(r => r.CurrentUsers > 0)
                     .ToList();
                 Console.WriteLine($"[TcpManager] room_list 수신 - 방 개수: {rooms.Count}");
+                Logger.Instance.Log("INFO", $"room_list 수신 - 방 개수: {rooms.Count}");
                 OnRoomListReceived?.Invoke(rooms);
                 break;
 
@@ -140,18 +150,21 @@ internal class TcpManager : ITcpManager
                     .Select(u => u.GetInt32())
                     .ToList();
                 Console.WriteLine($"[TcpManager] user_list 수신 - {users.Count}명");
+                Logger.Instance.Log("INFO", $"user_list 수신 - {users.Count}명");
                 OnUserListReceived?.Invoke(users);
                 break;
 
             case "user_joined":
                 var joinedId = doc.RootElement.GetProperty("userId").GetInt32();
                 Console.WriteLine($"[TcpManager] user_joined: {joinedId}");
+                Logger.Instance.Log("INFO", $"user_joined: {joinedId}");
                 OnUserJoined?.Invoke(joinedId);
                 break;
 
             case "user_left":
                 var leftId = doc.RootElement.GetProperty("userId").GetInt32();
                 Console.WriteLine($"[TcpManager] user_left: {leftId}");
+                Logger.Instance.Log("INFO", $"user_left: {leftId}");
                 OnUserLeft?.Invoke(leftId);
                 break;
         }
@@ -179,17 +192,11 @@ internal class TcpManager : ITcpManager
                     byte[] payload = new byte[header.PayloadLength];
                     ReadExact(_stream, payload, header.PayloadLength);
 
-                    // 로그 추가 - 바이트 그대로 출력
-                   // Console.WriteLine($"[TcpManager] PayloadLength: {header.PayloadLength}");
-                    //Console.WriteLine($"[TcpManager] 실제 바이트: {BitConverter.ToString(payload)}");
-
-                   // string raw = Encoding.UTF8.GetString(payload);
-                    //Console.WriteLine($"[TcpManager] raw 문자열: {raw}");
-
                     ParseEvent(payload);
                 }
                 catch (Exception ex)
                 {
+                    Logger.Instance.Log("ERROR", $"TCP 수신 오류 - {ex.Message}"); // 추가
                     Console.WriteLine($"[TcpManager] ReceiveLoop 예외: {ex.Message}");
                     break;
                 }
@@ -208,5 +215,19 @@ internal class TcpManager : ITcpManager
             total += n;
         }
         return total;
+    }
+
+    public void Disconnect()
+    {
+        try
+        {
+            Logger.Instance.Log("INFO", "서버 연결 해제 요청");
+            _stream?.Close();
+            _client?.Close();
+        }
+        catch (Exception ex)
+        {
+            Logger.Instance.Log("ERROR", $"연결 해제 중 오류 - {ex.Message}");
+        }
     }
 }

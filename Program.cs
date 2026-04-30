@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using VoiceChat.Forms;
 using DotNetEnv;
+using VoiceChat.Utils;
 
 namespace VoiceChat
 {
@@ -22,17 +23,15 @@ namespace VoiceChat
             Env.Load();
 
             var mainForm = new MainForm();
-
-#if DEBUG
-            // 테스트 모드: TestTcpManager 사용
+  
             ITcpManager tcp = new TcpManager();
-#else
-        // 실제 모드: 팀원 TcpManager 사용
-        ITcpManager tcp = new TcpManager();
-#endif
+
+            Logger.Instance.Init($"client_{DateTime.Now:yyyyMMdd}.log");
 
             Application.Run(mainForm);
-           
+
+            Logger.Instance.Close();
+
         }
     }
 }
